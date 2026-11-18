@@ -66,15 +66,26 @@ def _sketch(spec: ModelSpec, scene: Scene) -> str:
     next_id = 1
     title_id = next_id
     next_id += 1
+    title_half = max(60, len(spec.title) * 6)
     lines.append(
-        f"12,{title_id},0,{scene.width // 2},42,{scene.width // 2 - 80},22,8,4,0,0,0,0,0,0"
+        f"12,{title_id},0,{scene.width // 2},42,{title_half},16,8,135,0,18,-1,0,0,0,"
+        "-1--1--1,0-0-0,||B|0-0-0,0,0,0,0,0,0"
     )
     lines.append(spec.title)
 
-    ordered_shapes = sorted(
+    # Vensim attaches a flow's name to its valve only when the name record directly
+    # follows the valve record, so emit each valve and its label as a pair.
+    labels = {shape.attached_to: shape for shape in scene.shapes.values() if shape.kind == "flow"}
+    ordered_shapes = []
+    for shape in sorted(
         scene.shapes.values(),
-        key=lambda shape: ({"cloud": 0, "valve": 1, "flow": 2, "level": 3}.get(shape.kind, 4), shape.x, shape.y),
-    )
+        key=lambda shape: ({"level": 0, "valve": 1, "cloud": 2}.get(shape.kind, 3), shape.y, shape.x),
+    ):
+        if shape.kind == "flow":
+            continue
+        ordered_shapes.append(shape)
+        if shape.kind == "valve":
+            ordered_shapes.append(labels[shape.key])
     for shape in ordered_shapes:
         shape.object_id = next_id
         next_id += 1
@@ -83,20 +94,18 @@ def _sketch(spec: ModelSpec, scene: Scene) -> str:
         x, y = int(round(shape.x)), int(round(shape.y))
         w, h = int(round(shape.width / 2)), int(round(shape.height / 2))
         if shape.kind == "cloud":
-            lines.append(f"12,{shape.object_id},48,{x},{y},10,8,0,3,0,0,-1,0,0,0")
+            lines.append(f"12,{shape.object_id},48,{x},{y},10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0")
         elif shape.kind == "valve":
-            lines.append(f"11,{shape.object_id},0,{x},{y},6,8,34,3,0,0,1,0,0,0")
-        elif shape.kind == "level":
-            lines.append(f"10,{shape.object_id},{shape.name},{x},{y},{w},{h},3,3,0,0,0,0,0,0")
-        elif shape.kind == "flow":
-            valve_id = scene.shapes[shape.attached_to or ""].object_id
+            direction = 4 if shape.vertical else 1
             lines.append(
-                f"10,{shape.object_id},{shape.name},{x},{y},{w},{h},40,3,0,0,-1,0,0,0,{valve_id}"
+                f"11,{shape.object_id},0,{x},{y},6,8,34,3,0,0,{direction},0,0,0,0,0,0,0,0,0"
             )
-        elif shape.kind == "constant":
-            lines.append(f"10,{shape.object_id},{shape.name},{x},{y},{w},{h},8,3,0,0,0,0,0,0")
+        elif shape.kind == "level":
+            lines.append(f"10,{shape.object_id},{shape.name},{x},{y},{w},{h},3,3,0,0,0,0,0,0,0,0,0,0,0,0")
+        elif shape.kind == "flow":
+            lines.append(f"10,{shape.object_id},{shape.name},{x},{y},{w},{h},40,3,0,0,-1,0,0,0,0,0,0,0,0,0")
         else:
-            lines.append(f"10,{shape.object_id},{shape.name},{x},{y},{w},{h},8,3,0,0,0,0,0,0")
+            lines.append(f"10,{shape.object_id},{shape.name},{x},{y},{w},{h},8,3,0,0,-1,0,0,0,0,0,0,0,0,0")
 
     for route in scene.routes:
         source = scene.shapes[route.source]
@@ -104,19 +113,29 @@ def _sketch(spec: ModelSpec, scene: Scene) -> str:
         arrow_id = next_id
         next_id += 1
         if route.kind == "physical":
+            # Pipes run from the valve: shape 4 ends in an arrowhead, 100 has none.
+            shape_code = 4 if route.head else 100
             midpoint = (int((source.x + target.x) / 2), int((source.y + target.y) / 2))
             lines.append(
-                f"1,{arrow_id},{source.object_id},{target.object_id},4,0,0,22,0,0,0,-1--1--1,,"
-                f"1|({midpoint[0]},{midpoint[1]})|"
+                f"1,{arrow_id},{source.object_id},{target.object_id},{shape_code},0,0,22,0,192,0,"
+                f"-1--1--1,,1|({midpoint[0]},{midpoint[1]})|"
             )
+            continue
+        polarity = ord(route.polarity) if route.polarity in ("+", "-") else 0
+        if route.control is None:
+            shape_code, point = 0, (0, 0)
         else:
-            control = route.control or ((source.x + target.x) / 2, (source.y + target.y) / 2)
-            polarity = route.polarity
-            polarity_field = f",{polarity}" if polarity else ""
-            lines.append(
-                f"1,{arrow_id},{source.object_id},{target.object_id},0,0,0,0,0,64,0,-1--1--1{polarity_field},"
-                f"1|({int(control[0])},{int(control[1])})|"
+            # Vensim's handle lies on the arc; the layout's control is a quadratic Bezier
+            # control point, whose curve passes through the midpoint below.
+            shape_code = 1
+            point = (
+                int(0.25 * source.x + 0.5 * route.control[0] + 0.25 * target.x),
+                int(0.25 * source.y + 0.5 * route.control[1] + 0.25 * target.y),
             )
+        lines.append(
+            f"1,{arrow_id},{source.object_id},{target.object_id},{shape_code},0,{polarity},0,0,192,0,"
+            f"-1--1--1,,1|({point[0]},{point[1]})|"
+        )
     lines.append(FOOTER.rstrip("\n"))
     return "\n".join(lines) + "\n"
 

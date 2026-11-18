@@ -71,7 +71,7 @@ def render_svg(model_path: str | Path, output_path: str | Path) -> Path:
         '<marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#475569"/></marker>',
         '<marker id="flow-arrow" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="9" refX="11" refY="4.5" orient="auto"><path d="M0,0 L12,4.5 L0,9 Z" fill="#0f766e"/></marker>',
         "<style>",
-        ".title{font:700 22px Inter,Arial,sans-serif;fill:#0f172a;text-anchor:middle}.node-label{font:600 13px Inter,Arial,sans-serif;fill:#1e293b;text-anchor:middle}.flow-label{font:600 12px Inter,Arial,sans-serif;fill:#0f766e;text-anchor:middle}.small-label{font:500 12px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle}.info{fill:none;stroke:#64748b;stroke-width:1.8;marker-end:url(#arrow)}.pipe{fill:none;stroke:#0f766e;stroke-width:4;marker-end:url(#flow-arrow)}",
+        ".title{font:700 22px Inter,Arial,sans-serif;fill:#0f172a;text-anchor:middle}.node-label{font:600 13px Inter,Arial,sans-serif;fill:#1e293b;text-anchor:middle}.flow-label{font:600 12px Inter,Arial,sans-serif;fill:#0f766e;text-anchor:middle}.small-label{font:500 12px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle}.info{fill:none;stroke:#64748b;stroke-width:1.8;marker-end:url(#arrow)}.pipe{fill:none;stroke:#0f766e;stroke-width:4;marker-end:url(#flow-arrow)}.pipe.tail{marker-end:none}",
         "</style></defs>",
         f'<rect width="100%" height="100%" rx="18" fill="#f8fafc"/><rect x="20" y="20" width="{width - 40}" height="{height - 40}" rx="16" fill="#fff" stroke="#e2e8f0"/>',
         f'<text class="title" x="{width / 2:.0f}" y="52">{escape(title)}</text>',
@@ -81,7 +81,10 @@ def render_svg(model_path: str | Path, output_path: str | Path) -> Path:
         target_obj = object_map.get(arrow.target_id)
         if not source_obj or not target_obj:
             continue
-        css_class = "pipe" if arrow.kind == "physical" else "info"
+        if arrow.kind == "physical":
+            css_class = "pipe" if arrow.head else "pipe tail"
+        else:
+            css_class = "info"
         svg.append(f'<path class="{css_class}" d="{_curve(source_obj, target_obj, arrow.control_points)}"/>')
 
     for obj in objects:

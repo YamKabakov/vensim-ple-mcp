@@ -51,6 +51,7 @@ class SketchArrow:
     kind: str
     control_points: tuple[tuple[float, float], ...]
     raw: str
+    head: bool = True
 
 
 def _read(path: str | Path) -> tuple[Path, str]:
@@ -100,6 +101,7 @@ def parse_sketch(text: str) -> tuple[list[SketchObject], list[SketchArrow], list
     objects: list[SketchObject] = []
     arrows: list[SketchArrow] = []
     views: list[str] = []
+    pending_arcs: list[tuple[int, tuple[float, float]]] = []
     lines = text[text.index(SKETCH_MARKER) :].splitlines()
     for line in lines:
         if line.startswith("*"):
@@ -116,14 +118,21 @@ def parse_sketch(text: str) -> tuple[list[SketchObject], list[SketchArrow], list
         if record_type == 1:
             if len(fields) < 5:
                 continue
+            shape = int(fields[4])
+            points = _points(line)
+            control: tuple[tuple[float, float], ...] = ()
+            if shape == 1 and points:
+                pending_arcs.append((len(arrows), points[0]))
             arrows.append(
                 SketchArrow(
                     object_id=object_id,
                     source_id=int(fields[2]),
                     target_id=int(fields[3]),
-                    kind="physical" if int(fields[4]) == 4 else "information",
-                    control_points=_points(line),
+                    # 4 = pipe with arrowhead, 100 = pipe end without one (Vensim's own codes).
+                    kind="physical" if shape in (4, 100) else "information",
+                    control_points=control,
                     raw=line,
+                    head=shape != 100,
                 )
             )
             continue
@@ -152,6 +161,16 @@ def parse_sketch(text: str) -> tuple[list[SketchObject], list[SketchArrow], list
                 raw=line,
             )
         )
+    # Curved arrows store a handle on the arc; convert it to the equivalent quadratic
+    # Bezier control point (c = 2m - (s + e) / 2) once both endpoints are known.
+    by_id = {obj.object_id: obj for obj in objects}
+    for index, (mx, my) in pending_arcs:
+        arrow = arrows[index]
+        start, end = by_id.get(arrow.source_id), by_id.get(arrow.target_id)
+        if start and end:
+            arrow.control_points = (
+                (2 * mx - (start.x + end.x) / 2, 2 * my - (start.y + end.y) / 2),
+            )
     return objects, arrows, views
 
 

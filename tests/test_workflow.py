@@ -41,6 +41,55 @@ class WorkflowTest(unittest.TestCase):
         self.assertIn(None, controls)
         self.assertTrue(any(control is not None for control in controls))
 
+    def test_sketch_records_follow_vensim_conventions(self) -> None:
+        # Formats taken from models saved by Vensim PLE 10.5 itself.
+        with tempfile.TemporaryDirectory() as tmp:
+            model = generate_model(SPEC, Path(tmp) / "market.mdl")
+            sketch = model.read_text(encoding="utf-8").split("Sketch information", 1)[1]
+        records = [
+            line.split("|", 1)[0].split(",")
+            for line in sketch.splitlines()
+            if line.split(",", 1)[0] in ("1", "10", "11", "12")
+        ]
+        by_id = {fields[1]: fields for fields in records if fields[0] != "1"}
+        order = [fields[1] for fields in records if fields[0] != "1"]
+        # A flow's name record must directly follow its valve, or Vensim detaches it.
+        for index, object_id in enumerate(order):
+            if by_id[object_id][0] == "11":
+                follower = by_id[order[index + 1]]
+                self.assertEqual((follower[0], follower[7]), ("10", "40"))
+        pipes = [fields for fields in records if fields[0] == "1" and fields[4] in ("4", "100")]
+        self.assertEqual(len(pipes), 4)
+        for fields in pipes:
+            # Both halves of a pipe start at the valve; only the downstream half has a head.
+            self.assertEqual(by_id[fields[2]][0], "11")
+        self.assertEqual(sorted(fields[4] for fields in pipes), ["100", "100", "4", "4"])
+        links = [fields for fields in records if fields[0] == "1" and fields[4] in ("0", "1")]
+        # Polarity is stored as a character code in field 6, not as text elsewhere.
+        self.assertTrue(all(fields[6] in ("0", "43", "45") for fields in links))
+        self.assertIn("45", {fields[6] for fields in links})
+
+    def test_separate_stock_chains_get_separate_rows(self) -> None:
+        spec = {
+            "name": "two", "title": "Two",
+            "simulation": {"initial_time": 0, "final_time": 10, "time_step": 1, "time_unit": "Year"},
+            "levels": [
+                {"name": "A", "equation": "INTEG ( In A - Out A, 1 )", "unit": "x"},
+                {"name": "B", "equation": "INTEG ( In B - Out B, 1 )", "unit": "x"},
+            ],
+            "flows": [
+                {"name": "In A", "equation": "1", "unit": "x", "source": None, "target": "A"},
+                {"name": "Out A", "equation": "1", "unit": "x", "source": "A", "target": None},
+                {"name": "In B", "equation": "1", "unit": "x", "source": None, "target": "B"},
+                {"name": "Out B", "equation": "1", "unit": "x", "source": "B", "target": None},
+            ],
+            "variables": [],
+            "links": [],
+        }
+        scene = build_scene(ModelSpec.from_json(spec))
+        self.assertNotEqual(scene.shapes["A"].y, scene.shapes["B"].y)
+        self.assertTrue(all(shape.x > 0 and shape.y > 0 for shape in scene.shapes.values()))
+
     def test_duplicate_names_are_rejected(self) -> None:
         data = json.loads(SPEC.read_text(encoding="utf-8"))
         data["variables"].append(
