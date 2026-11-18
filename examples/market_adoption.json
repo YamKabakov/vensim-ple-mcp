@@ -1,0 +1,59 @@
+{
+  "name": "market_adoption_feedback",
+  "title": "Market Adoption Feedback",
+  "simulation": {
+    "initial_time": 0,
+    "final_time": 60,
+    "time_step": 0.25,
+    "time_unit": "Month"
+  },
+  "levels": [
+    {
+      "name": "Active Users",
+      "equation": "INTEG ( Acquisition - Attrition, 100 )",
+      "unit": "User",
+      "note": "Current active user base"
+    }
+  ],
+  "flows": [
+    {
+      "name": "Acquisition",
+      "equation": "Base Acquisition * Remaining Market / Market Potential + Word of Mouth",
+      "unit": "User/Month",
+      "source": null,
+      "target": "Active Users"
+    },
+    {
+      "name": "Attrition",
+      "equation": "Active Users * Churn Fraction",
+      "unit": "User/Month",
+      "source": "Active Users",
+      "target": null
+    }
+  ],
+  "variables": [
+    {"name": "Market Potential", "equation": "10000", "unit": "User", "kind": "constant"},
+    {"name": "Remaining Market", "equation": "MAX ( Market Potential - Active Users, 0 )", "unit": "User"},
+    {"name": "Contact Effectiveness", "equation": "0.035", "unit": "1/Month", "kind": "constant"},
+    {"name": "Word of Mouth", "equation": "Contact Effectiveness * Active Users * Remaining Market / Market Potential", "unit": "User/Month"},
+    {"name": "Campaign Budget", "equation": "70", "unit": "Currency/Month", "kind": "constant"},
+    {"name": "Campaign Efficiency", "equation": "1.8", "unit": "User/Currency", "kind": "constant"},
+    {"name": "Base Acquisition", "equation": "Campaign Budget * Campaign Efficiency", "unit": "User/Month"},
+    {"name": "Churn Fraction", "equation": "0.025", "unit": "1/Month", "kind": "constant"}
+  ],
+  "links": [
+    {"source": "Active Users", "target": "Remaining Market", "polarity": "-"},
+    {"source": "Market Potential", "target": "Remaining Market", "polarity": "+"},
+    {"source": "Contact Effectiveness", "target": "Word of Mouth", "polarity": "+"},
+    {"source": "Active Users", "target": "Word of Mouth", "polarity": "+"},
+    {"source": "Remaining Market", "target": "Word of Mouth", "polarity": "+"},
+    {"source": "Market Potential", "target": "Word of Mouth", "polarity": "-"},
+    {"source": "Campaign Budget", "target": "Base Acquisition", "polarity": "+"},
+    {"source": "Campaign Efficiency", "target": "Base Acquisition", "polarity": "+"},
+    {"source": "Base Acquisition", "target": "Acquisition", "polarity": "+"},
+    {"source": "Word of Mouth", "target": "Acquisition", "polarity": "+"},
+    {"source": "Remaining Market", "target": "Acquisition", "polarity": "+"},
+    {"source": "Churn Fraction", "target": "Attrition", "polarity": "+"},
+    {"source": "Active Users", "target": "Attrition", "polarity": "+"}
+  ]
+}
