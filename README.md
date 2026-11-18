@@ -19,7 +19,7 @@ Vensim PLE has no scripting interface, DLL, or batch mode. This server works on 
 | `rename_vensim_variable` | Rename a variable in its equation, every equation that uses it, and the diagram |
 | `delete_vensim_variable` | Remove a variable and its diagram objects. Refuses while other equations use it; a deleted flow is also taken out of its stocks' equations |
 | `inspect_vensim_model` | Read equations, diagram objects, arrows, and views |
-| `validate_vensim_model` | Static audit: diagram overlaps, crossing links, variables missing from the diagram |
+| `validate_vensim_model` | Static audit. Equations: undefined variables, unknown functions, unit mismatches (including stock and delay-time units), unused constants. Diagram: arrows that don't match equations, flows piped to a stock but missing from its `INTEG` (or with the wrong sign), overlaps, crossing links. Each finding is also returned as a structured `issues` entry |
 | `render_vensim_preview` | SVG preview drawn from the model's own diagram records |
 | `plot_vensim_results` | Simulate with PySD and save an SVG line chart (stocks by default; one panel per unit). Works without Vensim |
 | `simulate_in_vensim` | Run the simulation inside the installed Vensim, so its Graph and Table tools have a loaded run (`<run_name>.vdfx` next to the model). See [Simulating inside Vensim](#simulating-inside-vensim) |
@@ -89,6 +89,7 @@ The test suite skips the test that drives a real Vensim; run it with `VENSIM_LIV
 
 ## Limits
 
+- The unit check is conservative: it skips anything it cannot infer (unfamiliar functions, variables without units) and only knows that time units like Month and Months are the same. Vensim's Units Check remains the authority.
 - Simulation covers what PySD supports, which is most standard Vensim functions; see the [PySD docs](https://pysd.readthedocs.io/) for exceptions. Vensim remains the authority on Model Check and Units Check.
 - The JSON spec supports stocks, flows, auxiliaries, and constants. No lookups, subscripts, or multiple views yet.
 - Editing covers plain equations. Subscripted, lookup and data variables are left alone and must be edited in Vensim.
@@ -96,9 +97,8 @@ The test suite skips the test that drives a real Vensim; run it with `VENSIM_LIV
 
 ## Roadmap
 
-1. Equation-level checks: undefined references, arrows that don't match equations, basic unit consistency
-2. Feedback loop detection with reinforcing/balancing labels
-3. Lookups and multiple views in the spec
+1. Feedback loop detection with reinforcing/balancing labels
+2. Lookups and multiple views in the spec
 
 ## Credits
 

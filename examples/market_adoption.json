@@ -42,6 +42,7 @@
     {"name": "Churn Fraction", "equation": "0.025", "unit": "1/Month", "kind": "constant"}
   ],
   "links": [
+    {"source": "Market Potential", "target": "Acquisition", "polarity": "-"},
     {"source": "Active Users", "target": "Remaining Market", "polarity": "-"},
     {"source": "Market Potential", "target": "Remaining Market", "polarity": "+"},
     {"source": "Contact Effectiveness", "target": "Word of Mouth", "polarity": "+"},

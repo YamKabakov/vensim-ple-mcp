@@ -171,10 +171,15 @@ def _split_integ(expression: str) -> tuple[str, str] | None:
 
 
 def _terms(expression: str) -> list[tuple[str, str]]:
-    """Split at top-level + and - into (sign, term) pairs."""
+    """Split at top-level + and - into (sign, term) pairs; quoted names stay whole."""
     terms: list[tuple[str, str]] = []
-    depth, sign, current = 0, "+", ""
+    depth, sign, current, quoted = 0, "+", "", False
     for char in expression:
+        if char == '"':
+            quoted = not quoted
+        if quoted or char == '"':
+            current += char
+            continue
         if char in "+-" and depth == 0 and current.strip():
             # A sign after e or E inside a number (1e-3) is part of the number.
             if re.search(r"\d[eE]$", current.strip()):

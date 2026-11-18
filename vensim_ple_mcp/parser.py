@@ -360,9 +360,16 @@ def validate_model(path: str | Path) -> dict:
     if route_node_collisions:
         warnings.append(f"{route_node_collisions} routes pass through unrelated labels or nodes")
 
+    from .checks import check_equations
+
+    issues = check_equations(text)
+    errors.extend(issue["message"] for issue in issues if issue["severity"] == "error")
+    warnings.extend(issue["message"] for issue in issues if issue["severity"] == "warning")
+
     return {
         "ok": not errors,
         "path": str(model_path),
+        "issues": issues,
         "errors": errors,
         "warnings": warnings,
         "metrics": {
@@ -376,6 +383,7 @@ def validate_model(path: str | Path) -> dict:
             "information_route_crossings": information_crossings,
             "physical_route_crossings": physical_crossings,
             "route_node_collisions": route_node_collisions,
+            "equation_issues": len(issues),
         },
         "boundary": "Static .mdl audit; Vensim Model Check and Units Check remain authoritative.",
     }

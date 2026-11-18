@@ -297,7 +297,13 @@ def _improve_lanes(shapes: dict[str, Shape], links: list[tuple[str, str]], names
                 for step in (50, -50, 100, -100, 150, -150, 200, -200, 250, -250):
                     saved = {other: shapes[other].x for other in members}
                     _slide(shapes, members, name, step)
-                    cost = total()
+                    # A long slide can jump past a neighbour, which _slide doesn't push.
+                    ordered = sorted(members, key=lambda other: shapes[other].x)
+                    clear = all(
+                        shapes[b].x - shapes[a].x >= (shapes[a].width + shapes[b].width) / 2 + 10
+                        for a, b in zip(ordered, ordered[1:])
+                    )
+                    cost = total() if clear else best
                     if cost < best:
                         best, improved = cost, True
                         break

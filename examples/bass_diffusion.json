@@ -28,6 +28,7 @@
     {"source": "Potential Adopters", "target": "Adoption from Word of Mouth", "polarity": "+"},
     {"source": "Total Population", "target": "Adoption from Word of Mouth", "polarity": "-"},
     {"source": "Adoption from Advertising", "target": "Adoption Rate", "polarity": "+"},
-    {"source": "Adoption from Word of Mouth", "target": "Adoption Rate", "polarity": "+"}
+    {"source": "Adoption from Word of Mouth", "target": "Adoption Rate", "polarity": "+"},
+    {"source": "Total Population", "target": "Potential Adopters", "polarity": "+"}
   ]
 }

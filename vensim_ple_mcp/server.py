@@ -52,7 +52,14 @@ def inspect_vensim_model(model_path: str) -> dict:
 
 @mcp.tool()
 def validate_vensim_model(model_path: str) -> dict:
-    """Run a conservative static audit before opening the model in Vensim."""
+    """Audit a model before opening it in Vensim.
+
+    Errors (the model won't simulate): undefined variables, unknown functions, duplicate or
+    missing equations. Warnings: unit mismatches, arrows that don't match equations, flows
+    missing from or wrongly signed in a stock's INTEG, unused constants, and diagram
+    overlaps or crossings. `issues` lists the equation findings with the variable each is
+    about, so they can be fixed with set_vensim_equation.
+    """
     return validate_model(model_path)
 
 

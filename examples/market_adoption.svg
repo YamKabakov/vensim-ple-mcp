@@ -12,12 +12,13 @@
 <path class="pipe" d="M 574 341 L 665 341"/>
 <path class="pipe tail" d="M 880 341 L 789 341"/>
 <path class="pipe" d="M 894 341 L 1007 341"/>
-<path class="info" d="M 665 322 L 197 180"/>
-<path class="info" d="M 450 107 L 200 150"/>
+<path class="info" d="M 534 112 Q 622 222 565 359"/>
+<path class="info" d="M 665 322 Q 317 623 197 180"/>
+<path class="info" d="M 467 107 L 200 150"/>
 <path class="info" d="M 441 177 L 485 207"/>
 <path class="info" d="M 677 314 L 548 245"/>
 <path class="info" d="M 200 172 L 459 217"/>
-<path class="info" d="M 515 112 L 513 207"/>
+<path class="info" d="M 530 112 L 516 207"/>
 <path class="info" d="M 681 177 L 676 207"/>
 <path class="info" d="M 814 177 L 727 207"/>
 <path class="info" d="M 658 245 Q 664 332 576 359"/>
@@ -33,8 +34,8 @@
 <text class="flow-label" x="887" y="375">Attrition</text>
 <path d="M424,345 C421,336 431,331 437,336 C444,329 455,337 450,346 Z" fill="#ccfbf1" stroke="#0f766e"/>
 <path d="M1004,345 C1001,336 1011,331 1017,336 C1024,329 1035,337 1030,346 Z" fill="#ccfbf1" stroke="#0f766e"/>
-<rect x="450" y="80" width="130" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
-<text class="small-label" x="515" y="100">Market Potential</text>
+<rect x="467" y="80" width="130" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="532" y="100">Market Potential</text>
 <rect x="70" y="142" width="130" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
 <text class="small-label" x="135" y="165">Remaining Market</text>
 <rect x="340" y="145" width="156" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
