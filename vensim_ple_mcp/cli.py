@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from . import __version__
+from .editor import edit_model
 from .generator import generate_model
 from .native import doctor, generate_dss_command, open_in_vensim, simulate_in_vensim
 from .parser import inspect_model, validate_model
@@ -92,6 +93,41 @@ def build_parser() -> argparse.ArgumentParser:
     plot.add_argument("--final-time", type=float)
     plot.add_argument("--title")
 
+    set_eq = commands.add_parser("set", help="change a variable's equation, unit or note")
+    set_eq.add_argument("model", type=Path)
+    set_eq.add_argument("variable")
+    set_eq.add_argument("equation", nargs="?")
+    set_eq.add_argument("--unit")
+    set_eq.add_argument("--note")
+    set_eq.add_argument("--no-sync-links", action="store_true")
+
+    add = commands.add_parser("add", help="add a variable and draw it on the diagram")
+    add.add_argument("model", type=Path)
+    add.add_argument("name")
+    add.add_argument("equation")
+    add.add_argument("--unit", required=True)
+    add.add_argument("--kind", default="auxiliary",
+                     choices=["auxiliary", "constant", "level", "stock", "flow"])
+    add.add_argument("--note", default="")
+    add.add_argument("--source", help="stock a flow drains")
+    add.add_argument("--target", help="stock a flow fills")
+    add.add_argument("--near", help="place next to this variable")
+    add.add_argument("--at", nargs=2, type=float, metavar=("X", "Y"))
+    add.add_argument("--view")
+
+    rename = commands.add_parser("rename", help="rename a variable everywhere")
+    rename.add_argument("model", type=Path)
+    rename.add_argument("old")
+    rename.add_argument("new")
+
+    delete = commands.add_parser("delete", help="delete a variable and its diagram objects")
+    delete.add_argument("model", type=Path)
+    delete.add_argument("name")
+    delete.add_argument("--force", action="store_true")
+
+    for edit in (set_eq, add, rename, delete):
+        edit.add_argument("--output", "-o", type=Path, help="write here instead of in place")
+
     commands.add_parser("serve", help="run the MCP server over stdio")
     return parser
 
@@ -141,6 +177,25 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "sweep":
         _dump(sweep_parameter(args.model, args.parameter, args.values, args.var))
         return 0
+    if args.command in ("set", "add", "rename", "delete"):
+        if args.command == "set":
+            result = edit_model(args.model, "set_equation", args.output, name=args.variable,
+                                equation=args.equation, unit=args.unit, note=args.note,
+                                sync_links=not args.no_sync_links)
+        elif args.command == "add":
+            x, y = args.at if args.at else (None, None)
+            result = edit_model(args.model, "add_variable", args.output, name=args.name,
+                                equation=args.equation, unit=args.unit, kind=args.kind,
+                                note=args.note, source=args.source, target=args.target,
+                                near=args.near, x=x, y=y, view_name=args.view)
+        elif args.command == "rename":
+            result = edit_model(args.model, "rename_variable", args.output, old=args.old,
+                                new=args.new)
+        else:
+            result = edit_model(args.model, "delete_variable", args.output, name=args.name,
+                                force=args.force)
+        _dump(result)
+        return 0 if result["ok"] else 1
     if args.command == "serve":
         from .server import main as serve
 

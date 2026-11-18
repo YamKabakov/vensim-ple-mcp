@@ -30,6 +30,10 @@ EXPECTED_TOOLS = {
     "sweep_model_parameter",
     "simulate_in_vensim",
     "plot_vensim_results",
+    "set_vensim_equation",
+    "add_vensim_variable",
+    "rename_vensim_variable",
+    "delete_vensim_variable",
 }
 
 
@@ -131,6 +135,30 @@ class ServerStdioTest(unittest.IsolatedAsyncioTestCase):
                         {"model_path": str(mdl), "output_path": str(svg)},
                     )
                     self.assertIn("<svg", svg.read_text())
+
+                with self.subTest("edit tools write to output_path and keep the source"):
+                    edited = self.dir / "edited.mdl"
+                    added = await self._call(
+                        session,
+                        "add_vensim_variable",
+                        {
+                            "model_path": str(BASS),
+                            "name": "Market Share",
+                            "equation": "Adopters / Total Population",
+                            "unit": "Dmnl",
+                            "output_path": str(edited),
+                        },
+                    )
+                    self.assertTrue(added["ok"], added)
+                    self.assertIsNone(added["backup"])
+                    self.assertNotIn("Market Share", BASS.read_text())
+                    renamed = await self._call(
+                        session,
+                        "rename_vensim_variable",
+                        {"model_path": str(edited), "old_name": "Adopters", "new_name": "Users"},
+                    )
+                    self.assertTrue(renamed["ok"], renamed)
+                    self.assertIn("Market Share = Users / Total Population", edited.read_text())
 
                 with self.subTest("missing model is reported as a tool error"):
                     result = await session.call_tool(

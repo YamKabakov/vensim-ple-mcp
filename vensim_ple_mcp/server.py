@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from mcp.server.fastmcp import FastMCP
 
+from .editor import edit_model
 from .generator import generate_model
 from .native import doctor, generate_dss_command, open_in_vensim, simulate_in_vensim
 from .parser import inspect_model, validate_model
@@ -21,7 +22,10 @@ mcp = FastMCP(
         "not a replacement for Vensim's Model Check or Units Check: open the model in PLE for "
         "the authoritative check. When the user wants a run inside Vensim itself (for example "
         "so Vensim's Graph tool has a loaded run), call simulate_in_vensim. For a chart that "
-        "works without Vensim, call plot_vensim_results."
+        "works without Vensim, call plot_vensim_results. To change an existing model, use "
+        "set_vensim_equation, add_vensim_variable, rename_vensim_variable and "
+        "delete_vensim_variable: they keep the diagram and update arrows, pipes and stock "
+        "equations to match. Each keeps a backup and reports what changed."
     ),
     json_response=True,
 )
@@ -150,6 +154,86 @@ def sweep_model_parameter(
 ) -> dict:
     """Run the model once per value of one constant and compare outcome summaries."""
     return sweep_parameter(model_path, parameter, values, variables, base_overrides, final_time)
+
+
+@mcp.tool()
+def set_vensim_equation(
+    model_path: str,
+    variable: str,
+    equation: str | None = None,
+    unit: str | None = None,
+    note: str | None = None,
+    sync_links: bool = True,
+    output_path: str | None = None,
+) -> dict:
+    """Change a variable's equation, unit or note in an existing .mdl, keeping the diagram.
+
+    Leave a field as null to keep it. With sync_links, information arrows into the
+    variable are added for newly used variables and removed for ones no longer used.
+    Writes the model in place (a backup is kept) unless output_path is given. If the model
+    is open in Vensim, reopen it afterwards without saving.
+    """
+    return edit_model(
+        model_path, "set_equation", output_path,
+        name=variable, equation=equation, unit=unit, note=note, sync_links=sync_links,
+    )
+
+
+@mcp.tool()
+def add_vensim_variable(
+    model_path: str,
+    name: str,
+    equation: str,
+    unit: str,
+    kind: str = "auxiliary",
+    note: str = "",
+    source: str | None = None,
+    target: str | None = None,
+    near: str | None = None,
+    x: float | None = None,
+    y: float | None = None,
+    view: str | None = None,
+    output_path: str | None = None,
+) -> dict:
+    """Add a variable to an existing .mdl and draw it on the diagram with its arrows.
+
+    kind is auxiliary, constant, level (stock) or flow. A stock's equation must be
+    INTEG(net flow, initial value). A flow needs a source and/or target stock (a missing
+    end becomes a cloud); the stocks' INTEG equations are updated to include it, and its
+    valve, pipes and clouds are drawn. Placement is automatic, next to the variables it
+    uses or `near` another variable; pass x and y to place it exactly. Writes in place (a
+    backup is kept) unless output_path is given.
+    """
+    return edit_model(
+        model_path, "add_variable", output_path,
+        name=name, equation=equation, unit=unit, kind=kind, note=note, source=source,
+        target=target, x=x, y=y, near=near, view_name=view,
+    )
+
+
+@mcp.tool()
+def rename_vensim_variable(
+    model_path: str, old_name: str, new_name: str, output_path: str | None = None
+) -> dict:
+    """Rename a variable everywhere: its equation, every equation that uses it, and the diagram.
+
+    Writes in place (a backup is kept) unless output_path is given.
+    """
+    return edit_model(model_path, "rename_variable", output_path, old=old_name, new=new_name)
+
+
+@mcp.tool()
+def delete_vensim_variable(
+    model_path: str, name: str, force: bool = False, output_path: str | None = None
+) -> dict:
+    """Delete a variable's equation and its diagram objects and arrows.
+
+    Deleting a flow also removes it from its stocks' INTEG equations and removes its valve,
+    pipes and clouds. If other equations still use the variable the delete is refused and
+    they are listed; force=true deletes anyway, leaving those equations broken. Writes in
+    place (a backup is kept) unless output_path is given.
+    """
+    return edit_model(model_path, "delete_variable", output_path, name=name, force=force)
 
 
 def main() -> None:
