@@ -34,6 +34,7 @@ EXPECTED_TOOLS = {
     "add_vensim_variable",
     "rename_vensim_variable",
     "delete_vensim_variable",
+    "find_feedback_loops",
 }
 
 

@@ -452,9 +452,9 @@ class MdlDocument:
         """Model variables the block's equation uses, each once, in order."""
         others = [name for name in self.names() if fold(name) != block.key]
         seen, ordered = set(), []
-        definition = self.equations[block.start : block.definition_end]
-        lhs_end = definition.index("=") + 1
-        for _, _, name in find_references(definition[lhs_end:], others):
+        if block.expression is None:  # lookups and data have no equation to read
+            return []
+        for _, _, name in find_references(block.expression, others):
             if fold(name) not in seen:
                 seen.add(fold(name))
                 ordered.append(name)
@@ -715,12 +715,16 @@ class MdlDocument:
         cloud: tuple[float, float] | None = None
         if source_obj and target_obj:
             vertical = abs(target_obj.x - source_obj.x) < abs(target_obj.y - source_obj.y)
-            vx = (source_obj.x + target_obj.x) / 2 if x is None else x
-            vy = (source_obj.y + target_obj.y) / 2 if y is None else y
-            if abs(source_obj.x - target_obj.x) > 20 and abs(source_obj.y - target_obj.y) > 20:
+            if x is not None and y is not None:
+                vx, vy = x, y
+            else:
+                vx, vy = self._between_stocks(view, source_obj, target_obj, label_half, vertical)
+            aligned_x = abs(vx - source_obj.x) < 20 and abs(vx - target_obj.x) < 20
+            aligned_y = abs(vy - source_obj.y) < 20 and abs(vy - target_obj.y) < 20
+            if not (aligned_x or aligned_y):
                 self.warnings.append(
-                    f"{source} and {target} are not aligned, so the pipe is drawn at an angle; "
-                    "drag the stocks in Vensim to straighten it"
+                    f"the pipes from {name} to {source} and {target} are drawn at an angle; "
+                    "drag the valve or stocks in Vensim to straighten them"
                 )
         else:
             stock = source_obj or target_obj
@@ -803,6 +807,43 @@ class MdlDocument:
         ends_text = f"{source or 'cloud'} -> {target or 'cloud'}"
         self.changes.append(f"drew flow {name} ({ends_text}) at ({vx}, {vy}) on view {view.name!r}")
 
+    def _between_stocks(self, view, source, target, label_half, vertical):
+        """Valve position for a flow joining two stocks.
+
+        The midpoint, unless something sits between the stocks (a third stock in the
+        same row, say); then the first spot off the line where the valve, its label and
+        both pipes are clear, trying below/right of the line before above/left.
+        """
+        mx, my = (source.x + target.x) / 2, (source.y + target.y) / 2
+        dx, dy = target.x - source.x, target.y - source.y
+        length = max(math.hypot(dx, dy), 1)
+        normal = (-dy / length, dx / length)
+        if normal[0] + normal[1] < 0:
+            normal = (-normal[0], -normal[1])
+        ends = {source.id, target.id}
+        occupied = [_record_box(r) for r in view.records if r.type != 1 and r.id not in ends]
+        stock_boxes = [_record_box(source), _record_box(target)]
+        for offset in (0, 110, -110, 160, -160, 220, -220, 300, -300):
+            vx, vy = mx + normal[0] * offset, my + normal[1] * offset
+            label = (vx + label_half[0] + 14, vy) if vertical else (vx, vy + 30)
+            boxes = [_box(vx, vy, 6, 8), _box(*label, *label_half)]
+            for end in (source, target):
+                steps = max(1, int(math.hypot(end.x - vx, end.y - vy) / 10))
+                boxes += [
+                    _box(vx + (end.x - vx) * i / steps, vy + (end.y - vy) * i / steps, 2, 2)
+                    for i in range(1, steps)
+                ]
+            boxes = [b for b in boxes if not any(_overlaps(b, [sb], -2) for sb in stock_boxes)]
+            if all(b[0] >= 10 and b[1] >= 60 for b in boxes) and not any(
+                _overlaps(b, occupied, 6) for b in boxes
+            ):
+                return vx, vy
+        self.warnings.append(
+            f"no clear path between {source.name} and {target.name}; the flow overlaps other "
+            "objects, so drag it in Vensim or pass x and y"
+        )
+        return mx, my
+
     def _add_flow_term(self, stock: str, flow: str, sign: str) -> None:
         block = self.block(stock)
         net, initial = _split_integ(block.expression or "") or (None, None)
@@ -828,7 +869,9 @@ class MdlDocument:
     def delete_variable(self, name: str, force: bool = False) -> None:
         block = self.block(name)
         # A flow's own stocks lose it from their net flow; any other use blocks the delete.
-        for stock in [b for b in self.blocks() if b.is_level and b.key != block.key]:
+        # Rewriting one stock shifts the text after it, so look each stock up afresh.
+        for key in [b.key for b in self.blocks() if b.is_level and b.key != block.key]:
+            stock = next(b for b in self.blocks() if b.key == key)
             self._remove_flow_term(stock, block.name)
         dependents = [b.name for b in self.dependents(block.name)]
         if dependents and not force:
@@ -944,14 +987,17 @@ def _load(path: str | Path) -> tuple[Path, str, str, str]:
     return model, text.replace("\r\n", "\n"), encoding, newline
 
 
-def edit_model(path: str | Path, operation: str, output_path: str | Path | None = None, **kwargs) -> dict:
+def edit_model(path: str | Path, operation, output_path: str | Path | None = None, **kwargs) -> dict:
     """Apply one editing operation and write the model, keeping a backup of the original."""
     from .parser import validate_model
 
     model, text, encoding, newline = _load(path)
     document = MdlDocument(text)
     try:
-        getattr(document, operation)(**kwargs)
+        if callable(operation):
+            operation(document, **kwargs)
+        else:
+            getattr(document, operation)(**kwargs)
     except EditError as error:
         return {"ok": False, "error": str(error), "model": str(model), "written": False}
     output = Path(output_path).expanduser().resolve() if output_path else model

@@ -175,6 +175,14 @@ on clickAlert(p, labels)
     end tell
 end clickAlert
 
+on handBack(previous, p)
+    tell application "System Events"
+        try
+            if (name of previous) is not (name of p) then set frontmost of previous to true
+        end try
+    end tell
+end handBack
+
 on run argv
     set processName to item 1 of argv
     set modelName to item 2 of argv
@@ -184,7 +192,9 @@ on run argv
 
     tell application "System Events"
         set p to process processName
-        set frontmost of p to true
+        -- Vensim stays in the background except for the moment its Simulation menu
+        -- is needed (it only builds that menu while active); then focus goes back.
+        set previous to first process whose frontmost is true
 
         -- Wait for the model's window; stop on any alert Vensim raises while loading.
         set found to false
@@ -210,6 +220,11 @@ on run argv
         end repeat
         if not found then return "alert:Vensim did not show " & modelName & " in time."
 
+        set frontmost of p to true
+        repeat 40 times
+            if exists menu bar item "Simulation" of menu bar 1 of p then exit repeat
+            delay 0.05
+        end repeat
         click menu item "Simulation Control" of menu 1 of menu bar item "Simulation" of menu bar 1 of p
         -- A model with errors raises "cannot be simulated" instead of opening the dialog.
         repeat 40 times
@@ -217,19 +232,37 @@ on run argv
             set msg to my alertText(p)
             if msg is not missing value then
                 my clickAlert(p, {"No", "OK", "Cancel"})
+                my handBack(previous, p)
                 return "alert:" & msg
             end if
             delay 0.25
         end repeat
         if not (exists window "Simulation Control" of p) then
+            my handBack(previous, p)
             return "alert:Vensim did not open Simulation Control."
         end if
         set dialog to window "Simulation Control" of p
         set field to text field 1 of group 1 of dialog
+        -- Set the run name through accessibility rather than keystrokes, which go astray
+        -- if focus moves; type it only as a fallback, and never simulate under a name
+        -- other than the one asked for.
         set focused of field to true
-        keystroke "a" using command down
-        keystroke runName
+        set value of field to runName
         delay 0.2
+        if (value of field as text) is not runName then
+            set focused of field to true
+            keystroke "a" using command down
+            keystroke runName
+            delay 0.3
+        end if
+        set shown to value of field as text
+        if shown is not runName and shown is not (runName & ".vdfx") then
+            click button "Cancel" of dialog
+            my handBack(previous, p)
+            return "alert:Could not set the run name in Simulation Control (it shows '" & shown & "')."
+        end if
+        -- The name is committed; the rest works with Vensim in the background.
+        my handBack(previous, p)
         click (first button of dialog whose help is "Simulate")
 
         -- Simulating closes the dialog; an existing run name raises an overwrite alert.
@@ -277,7 +310,8 @@ def _simulate_mac_gui(
     installation: VensimInstallation, model: Path, run_name: str, overwrite: bool, timeout: int
 ) -> None:
     opened = subprocess.run(
-        ["open", "-a", installation.app_path, str(model)],
+        # -g: open without bringing Vensim to the front.
+        ["open", "-g", "-a", installation.app_path, str(model)],
         capture_output=True, text=True, timeout=20, check=False,
     )
     if opened.returncode != 0:

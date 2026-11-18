@@ -6,6 +6,7 @@ from mcp.server.fastmcp import FastMCP
 
 from .editor import edit_model
 from .generator import generate_model
+from .loops import find_loops
 from .native import doctor, generate_dss_command, open_in_vensim, simulate_in_vensim
 from .parser import inspect_model, validate_model
 from .plot import plot_results
@@ -25,7 +26,9 @@ mcp = FastMCP(
         "works without Vensim, call plot_vensim_results. To change an existing model, use "
         "set_vensim_equation, add_vensim_variable, rename_vensim_variable and "
         "delete_vensim_variable: they keep the diagram and update arrows, pipes and stock "
-        "equations to match. Each keeps a backup and reports what changed."
+        "equations to match. Each keeps a backup and reports what changed. "
+        "find_feedback_loops lists reinforcing and balancing loops and can label them on "
+        "the diagram."
     ),
     json_response=True,
 )
@@ -85,7 +88,8 @@ def simulate_in_vensim_tool(
     Saves <run_name>.vdfx next to the model. On macOS (PLE, PLE Plus, Professional) this
     drives Vensim's Simulation Control dialog and needs a one-time Accessibility permission
     for the app running this server; the error explains how to grant it. Vensim DSS uses a
-    command script. Vensim must not be in use by the person while the run starts.
+    command script. Vensim comes forward for about half a second to set up the run, then
+    focus returns to the person's app while it finishes in the background.
     """
     return simulate_in_vensim(model_path, run_name, overwrite, timeout)
 
@@ -241,6 +245,29 @@ def delete_vensim_variable(
     place (a backup is kept) unless output_path is given.
     """
     return edit_model(model_path, "delete_variable", output_path, name=name, force=force)
+
+
+@mcp.tool()
+def find_feedback_loops(
+    model_path: str,
+    annotate: bool = False,
+    max_loops: int = 200,
+    max_labels: int = 12,
+    output_path: str | None = None,
+) -> dict:
+    """List the model's feedback loops, each labelled reinforcing (R) or balancing (B).
+
+    Each loop lists its variables (starting at a stock), the polarity of every link, and
+    the stocks it passes through. Polarity comes from the equations, assuming positive
+    variables; a loop whose sign depends on values (an IF THEN ELSE condition, a
+    non-monotonic lookup) is 'unknown' and names the undetermined links. Also reports
+    algebraic loops (no stock or delay), which Vensim refuses to simulate.
+
+    With annotate=true, writes the link polarities onto the diagram's arrows and places
+    R1/B1 labels inside the loops (up to max_labels), in place with a backup unless
+    output_path is given. Re-running replaces earlier labels.
+    """
+    return find_loops(model_path, max_loops, annotate, max_labels, output_path)
 
 
 def main() -> None:

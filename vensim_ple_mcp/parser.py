@@ -52,6 +52,7 @@ class SketchArrow:
     control_points: tuple[tuple[float, float], ...]
     raw: str
     head: bool = True
+    polarity: str = ""
 
 
 def _read(path: str | Path) -> tuple[Path, str]:
@@ -103,7 +104,7 @@ def parse_sketch(text: str) -> tuple[list[SketchObject], list[SketchArrow], list
     views: list[str] = []
     pending_arcs: list[tuple[int, tuple[float, float]]] = []
     lines = text[text.index(SKETCH_MARKER) :].splitlines()
-    for line in lines:
+    for index, line in enumerate(lines):
         if line.startswith("*"):
             views.append(line[1:].strip())
             continue
@@ -133,6 +134,7 @@ def parse_sketch(text: str) -> tuple[list[SketchObject], list[SketchArrow], list
                     control_points=control,
                     raw=line,
                     head=shape != 100,
+                    polarity={"43": "+", "45": "-"}.get(fields[6], "") if len(fields) > 6 else "",
                 )
             )
             continue
@@ -145,8 +147,10 @@ def parse_sketch(text: str) -> tuple[list[SketchObject], list[SketchArrow], list
             name = ""
             kind = "valve"
         else:
-            name = ""
             kind = "cloud" if fields[2] == "48" else "comment"
+            # A comment's text is on the line after its record.
+            following = lines[index + 1] if index + 1 < len(lines) else ""
+            name = following.strip() if kind == "comment" and not re.match(r"^\d+,", following) else ""
         objects.append(
             SketchObject(
                 object_id=object_id,

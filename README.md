@@ -18,8 +18,9 @@ Vensim PLE has no scripting interface, DLL, or batch mode. This server works on 
 | `add_vensim_variable` | Add an auxiliary, constant, stock or flow and draw it next to the variables it uses. A new flow gets its valve, pipes and clouds, and its stocks' INTEG equations are updated |
 | `rename_vensim_variable` | Rename a variable in its equation, every equation that uses it, and the diagram |
 | `delete_vensim_variable` | Remove a variable and its diagram objects. Refuses while other equations use it; a deleted flow is also taken out of its stocks' equations |
+| `find_feedback_loops` | List feedback loops, each labelled reinforcing (R) or balancing (B), with the polarity of every link and the stocks it passes through. Flags algebraic loops (no stock or delay), which Vensim won't simulate. With `annotate`, writes link polarities onto the diagram's arrows and places R1/B1 labels inside the loops |
 | `inspect_vensim_model` | Read equations, diagram objects, arrows, and views |
-| `validate_vensim_model` | Static audit. Equations: undefined variables, unknown functions, unit mismatches (including stock and delay-time units), unused constants. Diagram: arrows that don't match equations, flows piped to a stock but missing from its `INTEG` (or with the wrong sign), overlaps, crossing links. Each finding is also returned as a structured `issues` entry |
+| `validate_vensim_model` | Static audit. Equations: undefined variables, unknown functions, algebraic loops, circular initialization (a SMOOTH or DELAY whose starting value depends on itself), unit mismatches (including stock and delay-time units), unused constants. Diagram: arrows that don't match equations, flows piped to a stock but missing from its `INTEG` (or with the wrong sign), overlaps, crossing links. Each finding is also returned as a structured `issues` entry |
 | `render_vensim_preview` | SVG preview drawn from the model's own diagram records |
 | `plot_vensim_results` | Simulate with PySD and save an SVG line chart (stocks by default; one panel per unit). Works without Vensim |
 | `simulate_in_vensim` | Run the simulation inside the installed Vensim, so its Graph and Table tools have a loaded run (`<run_name>.vdfx` next to the model). See [Simulating inside Vensim](#simulating-inside-vensim) |
@@ -67,7 +68,7 @@ Vensim's Graph tool only shows runs that Vensim simulated itself, so PySD result
 | DSS (macOS or Windows) | Vensim command script | None |
 | PLE on Windows | Not automated yet: open the model and click Simulate | None |
 
-Without the permission, the tool returns these steps instead of failing silently. It answers Vensim's routine prompts: it switches to an already-open model, opens the file instead of an autosave backup, and overwrites an existing run unless `overwrite` is false. Any other Vensim message, such as "Model has errors and cannot be simulated", is returned as the error. Vensim simulates the model as it is open in Vensim, and the tool briefly takes over the Vensim window, so don't type in Vensim while a run starts.
+Without the permission, the tool returns these steps instead of failing silently. It answers Vensim's routine prompts: it switches to an already-open model, opens the file instead of an autosave backup, and overwrites an existing run unless `overwrite` is false. Any other Vensim message, such as "Model has errors and cannot be simulated", is returned as the error. Vensim simulates the model as it is open in Vensim. Vensim stays in the background: it opens the model without coming forward, comes to the front for about half a second (it only builds its Simulation menu while active) to open Simulation Control and set the run name, then hands focus back to the app you were using while the run finishes behind it.
 
 ## Command line
 
@@ -79,6 +80,7 @@ uv run vensim-ple-mcp add model.mdl "Churn" "Adopters * 0.05" --unit Person/Year
 uv run vensim-ple-mcp set model.mdl "Word of Mouth Strength" 0.5
 uv run vensim-ple-mcp rename model.mdl "Adopters" "Customers"
 uv run vensim-ple-mcp delete model.mdl "Churn"
+uv run vensim-ple-mcp loops examples/bass_diffusion.mdl            # add --annotate to label the diagram
 uv run vensim-ple-mcp generate examples/bass_diffusion.json -o examples/bass_diffusion.mdl
 uv run vensim-ple-mcp render examples/bass_diffusion.mdl -o examples/bass_diffusion.svg
 uv run vensim-ple-mcp plot examples/bass_diffusion.mdl -o adoption.svg --var Adopters --var "Potential Adopters"
@@ -90,6 +92,7 @@ The test suite skips the test that drives a real Vensim; run it with `VENSIM_LIV
 ## Limits
 
 - The unit check is conservative: it skips anything it cannot infer (unfamiliar functions, variables without units) and only knows that time units like Month and Months are the same. Vensim's Units Check remains the authority.
+- Link polarity is worked out from the equations assuming variables are positive (constants use their actual sign), and lookups take their table's direction. When a sign depends on values, such as an IF THEN ELSE condition or a lookup that rises then falls, the loop is reported as unknown (U1, ...) with the undetermined links named, rather than guessed.
 - Simulation covers what PySD supports, which is most standard Vensim functions; see the [PySD docs](https://pysd.readthedocs.io/) for exceptions. Vensim remains the authority on Model Check and Units Check.
 - The JSON spec supports stocks, flows, auxiliaries, and constants. No lookups, subscripts, or multiple views yet.
 - Editing covers plain equations. Subscripted, lookup and data variables are left alone and must be edited in Vensim.
@@ -97,7 +100,7 @@ The test suite skips the test that drives a real Vensim; run it with `VENSIM_LIV
 
 ## Roadmap
 
-1. Feedback loop detection with reinforcing/balancing labels
+1. Loop dominance over time: which loops drive behaviour in each phase of a run
 2. Lookups and multiple views in the spec
 
 ## Credits

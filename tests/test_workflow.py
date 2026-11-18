@@ -35,6 +35,24 @@ class WorkflowTest(unittest.TestCase):
             inspected = inspect_model(model)
             self.assertIn("Active Users", {item["name"] for item in inspected["equations"]})
 
+    def test_layout_is_the_same_in_every_process(self) -> None:
+        # Python randomises string hashing per process; iterating a set of names once
+        # made the diagram (and this file's collision count) change between runs.
+        import os
+        import subprocess
+        import sys
+
+        outputs = set()
+        with tempfile.TemporaryDirectory() as tmp:
+            for seed in ("1", "2", "3", "4"):
+                target = Path(tmp) / f"m{seed}.mdl"
+                subprocess.run(
+                    [sys.executable, "-m", "vensim_ple_mcp.cli", "generate", str(SPEC), "-o", str(target)],
+                    check=True, capture_output=True, env={**os.environ, "PYTHONHASHSEED": seed},
+                )
+                outputs.add(target.read_text(encoding="utf-8"))
+        self.assertEqual(len(outputs), 1)
+
     def test_information_routes_mix_straight_and_curved_links(self) -> None:
         scene = build_scene(ModelSpec.from_json(SPEC))
         controls = [route.control for route in scene.routes if route.kind == "information"]

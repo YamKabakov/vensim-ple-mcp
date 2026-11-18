@@ -70,7 +70,7 @@ class SimulateInVensimTest(unittest.TestCase):
         self.assertEqual(result["dataset"], str(self.dataset.resolve()))
         self.assertEqual(result["method"], "macos_accessibility")
         opened, script = calls
-        self.assertEqual(opened[0][:3], ["open", "-a", MAC_PLE.app_path])
+        self.assertEqual(opened[0][:4], ["open", "-g", "-a", MAC_PLE.app_path])  # -g: stay in the background
         # Model and run names go in as arguments, never spliced into the script text.
         self.assertEqual(script[0][1:5], ["-", "VensimPLE", "bass.mdl", "baseline"])
         self.assertNotIn("baseline", script[1]["input"])

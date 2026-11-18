@@ -1,53 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1107" height="640" viewBox="0 0 1107 640">
+<svg xmlns="http://www.w3.org/2000/svg" width="1087" height="640" viewBox="0 0 1087 640">
 <defs>
 <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".12"/></filter>
 <marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#475569"/></marker>
 <marker id="flow-arrow" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="9" refX="11" refY="4.5" orient="auto"><path d="M0,0 L12,4.5 L0,9 Z" fill="#0f766e"/></marker>
 <style>
-.title{font:700 22px Inter,Arial,sans-serif;fill:#0f172a;text-anchor:middle}.node-label{font:600 13px Inter,Arial,sans-serif;fill:#1e293b;text-anchor:middle}.flow-label{font:600 12px Inter,Arial,sans-serif;fill:#0f766e;text-anchor:middle}.small-label{font:500 12px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle}.info{fill:none;stroke:#64748b;stroke-width:1.8;marker-end:url(#arrow)}.pipe{fill:none;stroke:#0f766e;stroke-width:4;marker-end:url(#flow-arrow)}.pipe.tail{marker-end:none}
+.title{font:700 22px Inter,Arial,sans-serif;fill:#0f172a;text-anchor:middle}.node-label{font:600 13px Inter,Arial,sans-serif;fill:#1e293b;text-anchor:middle}.flow-label{font:600 12px Inter,Arial,sans-serif;fill:#0f766e;text-anchor:middle}.small-label{font:500 12px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle}.info{fill:none;stroke:#64748b;stroke-width:1.8;marker-end:url(#arrow)}.pipe{fill:none;stroke:#0f766e;stroke-width:4;marker-end:url(#flow-arrow)}.pipe.tail{marker-end:none}.sign{font:700 14px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:3}.loop{font:700 13px Inter,Arial,sans-serif;text-anchor:middle}
 </style></defs>
-<rect width="100%" height="100%" rx="18" fill="#f8fafc"/><rect x="20" y="20" width="1067" height="600" rx="16" fill="#fff" stroke="#e2e8f0"/>
-<text class="title" x="554" y="52">Market Adoption Feedback</text>
-<path class="pipe tail" d="M 560 341 L 447 341"/>
-<path class="pipe" d="M 574 341 L 665 341"/>
-<path class="pipe tail" d="M 880 341 L 789 341"/>
-<path class="pipe" d="M 894 341 L 1007 341"/>
-<path class="info" d="M 534 112 Q 622 222 565 359"/>
-<path class="info" d="M 665 322 Q 317 623 197 180"/>
-<path class="info" d="M 467 107 L 200 150"/>
-<path class="info" d="M 441 177 L 485 207"/>
-<path class="info" d="M 677 314 L 548 245"/>
-<path class="info" d="M 200 172 L 459 217"/>
-<path class="info" d="M 530 112 L 516 207"/>
-<path class="info" d="M 681 177 L 676 207"/>
-<path class="info" d="M 814 177 L 727 207"/>
-<path class="info" d="M 658 245 Q 664 332 576 359"/>
-<path class="info" d="M 520 245 Q 450 332 563 359"/>
-<path class="info" d="M 174 180 Q 293 382 542 359"/>
-<path class="info" d="M 841 242 Q 771 330 883 359"/>
-<path class="info" d="M 789 353 L 847 364"/>
-<rect x="665" y="314" width="124" height="54" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" filter="url(#shadow)"/>
-<text class="node-label" x="727" y="345">Active Users</text>
-<path d="M559,334 L567,341 L559,348 Z M575,334 L567,341 L575,348 Z" fill="#14b8a6" stroke="#0f766e"/>
-<text class="flow-label" x="567" y="375">Acquisition</text>
-<path d="M879,334 L887,341 L879,348 Z M895,334 L887,341 L895,348 Z" fill="#14b8a6" stroke="#0f766e"/>
-<text class="flow-label" x="887" y="375">Attrition</text>
-<path d="M424,345 C421,336 431,331 437,336 C444,329 455,337 450,346 Z" fill="#ccfbf1" stroke="#0f766e"/>
-<path d="M1004,345 C1001,336 1011,331 1017,336 C1024,329 1035,337 1030,346 Z" fill="#ccfbf1" stroke="#0f766e"/>
-<rect x="467" y="80" width="130" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
-<text class="small-label" x="532" y="100">Market Potential</text>
+<rect width="100%" height="100%" rx="18" fill="#f8fafc"/><rect x="20" y="20" width="1047" height="600" rx="16" fill="#fff" stroke="#e2e8f0"/>
+<text class="title" x="544" y="52">Market Adoption Feedback</text>
+<path class="pipe tail" d="M 540 341 L 427 341"/>
+<path class="pipe" d="M 554 341 L 645 341"/>
+<path class="pipe tail" d="M 860 341 L 769 341"/>
+<path class="pipe" d="M 874 341 L 987 341"/>
+<path class="info" d="M 514 112 Q 602 222 545 359"/>
+<path class="info" d="M 645 321 Q 307 611 195 180"/>
+<path class="info" d="M 447 107 L 200 150"/>
+<path class="info" d="M 421 177 L 465 207"/>
+<path class="info" d="M 657 314 L 528 245"/>
+<path class="info" d="M 200 173 L 439 216"/>
+<path class="info" d="M 510 112 L 496 207"/>
+<path class="info" d="M 661 177 L 656 207"/>
+<path class="info" d="M 794 177 L 707 207"/>
+<path class="info" d="M 638 245 Q 644 332 556 359"/>
+<path class="info" d="M 500 245 Q 430 332 543 359"/>
+<path class="info" d="M 172 180 Q 265 414 523 359"/>
+<path class="info" d="M 821 242 Q 751 330 863 359"/>
+<path class="info" d="M 769 353 L 827 364"/>
+<rect x="645" y="314" width="124" height="54" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" filter="url(#shadow)"/>
+<text class="node-label" x="707" y="345">Active Users</text>
+<path d="M539,334 L547,341 L539,348 Z M555,334 L547,341 L555,348 Z" fill="#14b8a6" stroke="#0f766e"/>
+<text class="flow-label" x="547" y="375">Acquisition</text>
+<path d="M859,334 L867,341 L859,348 Z M875,334 L867,341 L875,348 Z" fill="#14b8a6" stroke="#0f766e"/>
+<text class="flow-label" x="867" y="375">Attrition</text>
+<path d="M404,345 C401,336 411,331 417,336 C424,329 435,337 430,346 Z" fill="#ccfbf1" stroke="#0f766e"/>
+<path d="M984,345 C981,336 991,331 997,336 C1004,329 1015,337 1010,346 Z" fill="#ccfbf1" stroke="#0f766e"/>
+<rect x="447" y="80" width="130" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="512" y="100">Market Potential</text>
 <rect x="70" y="142" width="130" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
 <text class="small-label" x="135" y="165">Remaining Market</text>
-<rect x="340" y="145" width="156" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
-<text class="small-label" x="418" y="165">Contact Effectiveness</text>
-<rect x="622" y="145" width="124" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
-<text class="small-label" x="684" y="165">Campaign Budget</text>
-<rect x="785" y="145" width="152" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
-<text class="small-label" x="861" y="165">Campaign Efficiency</text>
-<rect x="459" y="207" width="108" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
-<text class="small-label" x="513" y="222"><tspan x="513">Word of</tspan><tspan x="513" dy="15">Mouth</tspan></text>
-<rect x="607" y="207" width="130" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
-<text class="small-label" x="672" y="230">Base Acquisition</text>
-<rect x="777" y="210" width="116" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
-<text class="small-label" x="835" y="230">Churn Fraction</text>
+<rect x="320" y="145" width="156" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="398" y="165">Contact Effectiveness</text>
+<rect x="602" y="145" width="124" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="664" y="165">Campaign Budget</text>
+<rect x="765" y="145" width="152" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="841" y="165">Campaign Efficiency</text>
+<rect x="439" y="207" width="108" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="493" y="222"><tspan x="493">Word of</tspan><tspan x="493" dy="15">Mouth</tspan></text>
+<rect x="587" y="207" width="130" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="652" y="230">Base Acquisition</text>
+<rect x="757" y="210" width="116" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="815" y="230">Churn Fraction</text>
+<text class="sign" x="553" y="307">-</text>
+<text class="sign" x="259" y="326">-</text>
+<text class="sign" x="248" y="136">+</text>
+<text class="sign" x="451" y="214">+</text>
+<text class="sign" x="559" y="255">+</text>
+<text class="sign" x="389" y="222">+</text>
+<text class="sign" x="489" y="192">-</text>
+<text class="sign" x="647" y="204">+</text>
+<text class="sign" x="721" y="197">+</text>
+<text class="sign" x="584" y="341">+</text>
+<text class="sign" x="502" y="360">+</text>
+<text class="sign" x="429" y="384">+</text>
+<text class="sign" x="823" y="360">+</text>
+<text class="sign" x="814" y="376">+</text>
 </svg>

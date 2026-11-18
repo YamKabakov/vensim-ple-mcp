@@ -261,7 +261,8 @@ def _improve_lanes(shapes: dict[str, Shape], links: list[tuple[str, str]], names
     (1 per 100px, the price of one crossing), so the search doesn't sprawl the diagram.
     """
     lanes: dict[float, list[str]] = {}
-    for name in names:
+    # names is a set; iterate it in a fixed order or the layout changes between runs.
+    for name in sorted(names, key=lambda name: (shapes[name].x, name)):
         lanes.setdefault(round(shapes[name].y), []).append(name)
     home = {name: shapes[name].x for name in names}
 

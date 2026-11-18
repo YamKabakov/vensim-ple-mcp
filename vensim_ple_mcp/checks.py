@@ -526,6 +526,25 @@ def _check_diagram(model: _Model, issues: list[Issue]) -> None:
                                         f"{block.name}'s net flow uses {model.by_key[term].name}, which has no pipe to it"))
 
 
+def _check_algebraic_loops(model: _Model, issues: list[Issue]) -> None:
+    from .loops import CausalGraph
+
+    graph = CausalGraph(model.document)
+    for group in graph.initialization_loops():
+        issues.append(
+            Issue("error", "initialization-loop", group[0],
+                  f"{', '.join(group)} need each other's values at the initial time "
+                  "(circular initialization). A SMOOTH or DELAY starts equal to its input; "
+                  "use SMOOTHI or DELAY1I with an explicit initial value to break the cycle")
+        )
+    for group in graph.algebraic_loops():
+        issues.append(
+            Issue("error", "algebraic-loop", group[0],
+                  f"{', '.join(group)} depend on each other with no stock or delay between "
+                  "them (simultaneous equations); Vensim will not simulate this")
+        )
+
+
 def check_equations(text: str) -> list[dict]:
     """All equation-level issues in a model's text, errors first."""
     model = _Model(MdlDocument(text))
@@ -533,6 +552,7 @@ def check_equations(text: str) -> list[dict]:
     _check_expressions(model, issues)
     _check_unused(model, issues)
     _check_diagram(model, issues)
+    _check_algebraic_loops(model, issues)
     unique = list({(i.severity, i.check, i.variable, i.message): i for i in issues}.values())
     unique.sort(key=lambda issue: issue.severity != "error")
     return [asdict(issue) for issue in unique]

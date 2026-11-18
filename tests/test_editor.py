@@ -185,6 +185,27 @@ class EditorTest(unittest.TestCase):
         kinds = [obj.kind for obj in parse_sketch(self.model.read_text(encoding="utf-8"))[0]]
         self.assertEqual((kinds.count("valve"), kinds.count("cloud")), (1, 0))
 
+    def test_flow_between_two_stocks_skips_the_stock_between_them(self) -> None:
+        # Three stocks in a row: a flow from the last back to the first must not sit on
+        # the middle one, and deleting it must clean both stocks' equations.
+        document = MdlDocument(self.model.read_text(encoding="utf-8"))
+        document.add_variable("Former Adopters", "INTEG(0, 0)", "Person", kind="level", x=836, y=276)
+        document.add_variable(
+            "Return", "Former Adopters * 0.1", "Person/Year", kind="flow",
+            source="Former Adopters", target="Potential Adopters",
+        )
+        self.model.write_text(document.text(), encoding="utf-8")
+        from vensim_ple_mcp.parser import validate_model
+
+        self.assertEqual(validate_model(self.model)["metrics"]["overlaps"], 0)
+        valve_y = [o.y for o in parse_sketch(document.text())[0] if o.kind == "valve"]
+        self.assertNotEqual(valve_y[-1], 276)
+
+        document.delete_variable("Return")
+        expressions = {b.name: b.expression for b in scan_blocks(document.text())}
+        self.assertEqual(expressions["Former Adopters"], "INTEG ( 0, 0 )")
+        self.assertEqual(expressions["Potential Adopters"], "INTEG ( -Adoption Rate, Total Population )")
+
     def test_unknown_name_suggests_close_matches(self) -> None:
         result = edit_model(self.model, "set_equation", name="Adoption Rat", equation="0")
         self.assertFalse(result["ok"])

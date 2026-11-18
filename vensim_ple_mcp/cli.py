@@ -9,6 +9,7 @@ from pathlib import Path
 from . import __version__
 from .editor import edit_model
 from .generator import generate_model
+from .loops import find_loops
 from .native import doctor, generate_dss_command, open_in_vensim, simulate_in_vensim
 from .parser import inspect_model, validate_model
 from .plot import plot_results
@@ -128,6 +129,14 @@ def build_parser() -> argparse.ArgumentParser:
     for edit in (set_eq, add, rename, delete):
         edit.add_argument("--output", "-o", type=Path, help="write here instead of in place")
 
+    loops = commands.add_parser("loops", help="list feedback loops and their polarity")
+    loops.add_argument("model", type=Path)
+    loops.add_argument("--annotate", action="store_true",
+                       help="write link polarities and loop labels onto the diagram")
+    loops.add_argument("--max-loops", type=int, default=200)
+    loops.add_argument("--max-labels", type=int, default=12)
+    loops.add_argument("--output", "-o", type=Path)
+
     commands.add_parser("serve", help="run the MCP server over stdio")
     return parser
 
@@ -196,6 +205,9 @@ def main(argv: list[str] | None = None) -> int:
                                 force=args.force)
         _dump(result)
         return 0 if result["ok"] else 1
+    if args.command == "loops":
+        _dump(find_loops(args.model, args.max_loops, args.annotate, args.max_labels, args.output))
+        return 0
     if args.command == "serve":
         from .server import main as serve
 
