@@ -17,6 +17,8 @@ Vensim PLE has no scripting interface, DLL, or batch mode. This server works on 
 | `inspect_vensim_model` | Read equations, diagram objects, arrows, and views |
 | `validate_vensim_model` | Static audit: diagram overlaps, crossing links, variables missing from the diagram |
 | `render_vensim_preview` | SVG preview drawn from the model's own diagram records |
+| `plot_vensim_results` | Simulate with PySD and save an SVG line chart (stocks by default; one panel per unit). Works without Vensim |
+| `simulate_in_vensim` | Run the simulation inside the installed Vensim, so its Graph and Table tools have a loaded run (`<run_name>.vdfx` next to the model). See [Simulating inside Vensim](#simulating-inside-vensim) |
 | `open_vensim_model` | Open the model in the installed Vensim app |
 | `vensim_doctor` | Detect the local Vensim edition and what it supports |
 | `create_vensim_dss_script` | Batch script for Vensim DSS only |
@@ -49,6 +51,18 @@ Add it to Claude Desktop (`claude_desktop_config.json`):
 
 Or Claude Code: `claude mcp add vensim -- uv --directory /absolute/path/to/vensim-ple-mcp run vensim-ple-mcp-server`
 
+## Simulating inside Vensim
+
+Vensim's Graph tool only shows runs that Vensim simulated itself, so PySD results are not enough there. `simulate_in_vensim` makes Vensim do the run:
+
+| Vensim | How | One-time setup |
+|---|---|---|
+| PLE, PLE Plus, Professional on macOS | Drives the Simulation Control dialog through the macOS accessibility API | Turn on the app that runs the server (Claude Desktop, Terminal, iTerm, VS Code, ...) in System Settings > Privacy & Security > Accessibility, then restart that app |
+| DSS (macOS or Windows) | Vensim command script | None |
+| PLE on Windows | Not automated yet: open the model and click Simulate | None |
+
+Without the permission, the tool returns these steps instead of failing silently. It answers Vensim's routine prompts: it switches to an already-open model, opens the file instead of an autosave backup, and overwrites an existing run unless `overwrite` is false. Any other Vensim message, such as "Model has errors and cannot be simulated", is returned as the error. Vensim simulates the model as it is open in Vensim, and the tool briefly takes over the Vensim window, so don't type in Vensim while a run starts.
+
 ## Command line
 
 ```bash
@@ -57,7 +71,11 @@ uv run vensim-ple-mcp run examples/bass_diffusion.mdl --set "Word of Mouth Stren
 uv run vensim-ple-mcp sweep examples/bass_diffusion.mdl "Word of Mouth Strength" 0.2 0.38 0.6 --var "Adoption Rate"
 uv run vensim-ple-mcp generate examples/bass_diffusion.json -o examples/bass_diffusion.mdl
 uv run vensim-ple-mcp render examples/bass_diffusion.mdl -o examples/bass_diffusion.svg
+uv run vensim-ple-mcp plot examples/bass_diffusion.mdl -o adoption.svg --var Adopters --var "Potential Adopters"
+uv run vensim-ple-mcp vensim-run examples/bass_diffusion.mdl --run-name baseline
 ```
+
+The test suite skips the test that drives a real Vensim; run it with `VENSIM_LIVE=1 uv run python -m unittest tests.test_native_simulate`.
 
 ## Limits
 

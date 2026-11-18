@@ -5,8 +5,9 @@ from __future__ import annotations
 from mcp.server.fastmcp import FastMCP
 
 from .generator import generate_model
-from .native import doctor, generate_dss_command, open_in_vensim
+from .native import doctor, generate_dss_command, open_in_vensim, simulate_in_vensim
 from .parser import inspect_model, validate_model
+from .plot import plot_results
 from .renderer import render_svg
 from .simulate import list_parameters, run_model, sweep_parameter
 
@@ -18,7 +19,9 @@ mcp = FastMCP(
         "works with Vensim PLE, which has no scripting interface. Call list_model_parameters "
         "before run_model or sweep_parameter to get exact variable names. Static validation is "
         "not a replacement for Vensim's Model Check or Units Check: open the model in PLE for "
-        "the authoritative check."
+        "the authoritative check. When the user wants a run inside Vensim itself (for example "
+        "so Vensim's Graph tool has a loaded run), call simulate_in_vensim. For a chart that "
+        "works without Vensim, call plot_vensim_results."
     ),
     json_response=True,
 )
@@ -60,6 +63,40 @@ def render_vensim_preview(model_path: str, output_path: str) -> dict:
 def open_vensim_model(model_path: str) -> dict:
     """Open a .mdl in the locally installed Vensim application."""
     return open_in_vensim(model_path)
+
+
+@mcp.tool(name="simulate_in_vensim")
+def simulate_in_vensim_tool(
+    model_path: str, run_name: str = "current", overwrite: bool = True, timeout: int = 120
+) -> dict:
+    """Simulate inside the installed Vensim so its Graph and Table tools have a loaded run.
+
+    Saves <run_name>.vdfx next to the model. On macOS (PLE, PLE Plus, Professional) this
+    drives Vensim's Simulation Control dialog and needs a one-time Accessibility permission
+    for the app running this server; the error explains how to grant it. Vensim DSS uses a
+    command script. Vensim must not be in use by the person while the run starts.
+    """
+    return simulate_in_vensim(model_path, run_name, overwrite, timeout)
+
+
+@mcp.tool()
+def plot_vensim_results(
+    model_path: str,
+    output_path: str,
+    variables: list[str] | None = None,
+    overrides: dict[str, float] | None = None,
+    final_time: float | None = None,
+    time_step: float | None = None,
+    title: str | None = None,
+) -> dict:
+    """Simulate with PySD and save an SVG line chart; works without Vensim installed.
+
+    By default the model's stocks are drawn. Variables with different units get separate
+    stacked panels. overrides apply to this run only.
+    """
+    return plot_results(
+        model_path, output_path, variables, overrides, final_time, time_step, title
+    )
 
 
 @mcp.tool()

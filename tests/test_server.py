@@ -28,6 +28,8 @@ EXPECTED_TOOLS = {
     "list_model_parameters",
     "run_vensim_model",
     "sweep_model_parameter",
+    "simulate_in_vensim",
+    "plot_vensim_results",
 }
 
 
@@ -104,6 +106,14 @@ class ServerStdioTest(unittest.IsolatedAsyncioTestCase):
                         },
                     )
                     self.assertEqual([r["value"] for r in sweep["runs"]], [0.2, 0.6])
+
+                with self.subTest("plot_vensim_results"):
+                    chart = await self._call(
+                        session,
+                        "plot_vensim_results",
+                        {"model_path": str(BASS), "output_path": str(self.dir / "bass.svg")},
+                    )
+                    self.assertIn("<polyline", Path(chart["chart"]).read_text())
 
                 with self.subTest("generate, validate and render"):
                     mdl = self.dir / "market.mdl"

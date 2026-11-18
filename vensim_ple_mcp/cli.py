@@ -8,14 +8,25 @@ from pathlib import Path
 
 from . import __version__
 from .generator import generate_model
-from .native import doctor, generate_dss_command, open_in_vensim
+from .native import doctor, generate_dss_command, open_in_vensim, simulate_in_vensim
 from .parser import inspect_model, validate_model
+from .plot import plot_results
 from .renderer import render_svg
 from .simulate import list_parameters, run_model, sweep_parameter
 
 
 def _dump(data: dict) -> None:
     print(json.dumps(data, ensure_ascii=False, indent=2))
+
+
+def _overrides(items: list[str]) -> dict[str, float]:
+    overrides = {}
+    for item in items:
+        name, sep, value = item.partition("=")
+        if not sep:
+            raise SystemExit(f"--set expects NAME=VALUE, got {item!r}")
+        overrides[name.strip()] = float(value)
+    return overrides
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -66,6 +77,21 @@ def build_parser() -> argparse.ArgumentParser:
     sweep.add_argument("values", type=float, nargs="+")
     sweep.add_argument("--var", action="append", default=None)
 
+    vensim_run = commands.add_parser(
+        "vensim-run", help="simulate inside the installed Vensim (loads a run for its graphs)"
+    )
+    vensim_run.add_argument("model", type=Path)
+    vensim_run.add_argument("--run-name", default="current")
+    vensim_run.add_argument("--no-overwrite", action="store_true")
+
+    plot = commands.add_parser("plot", help="simulate with PySD and save an SVG chart")
+    plot.add_argument("model", type=Path)
+    plot.add_argument("--output", "-o", type=Path, required=True)
+    plot.add_argument("--var", action="append", default=None)
+    plot.add_argument("--set", action="append", default=[], metavar="NAME=VALUE")
+    plot.add_argument("--final-time", type=float)
+    plot.add_argument("--title")
+
     commands.add_parser("serve", help="run the MCP server over stdio")
     return parser
 
@@ -101,13 +127,16 @@ def main(argv: list[str] | None = None) -> int:
         _dump(list_parameters(args.model))
         return 0
     if args.command == "run":
-        overrides = {}
-        for item in args.set:
-            name, _, value = item.partition("=")
-            if not _:
-                raise SystemExit(f"--set expects NAME=VALUE, got {item!r}")
-            overrides[name.strip()] = float(value)
+        overrides = _overrides(args.set)
         _dump(run_model(args.model, overrides, args.var, args.final_time, csv_path=args.csv))
+        return 0
+    if args.command == "vensim-run":
+        _dump(simulate_in_vensim(args.model, args.run_name, overwrite=not args.no_overwrite))
+        return 0
+    if args.command == "plot":
+        overrides = _overrides(args.set)
+        _dump(plot_results(args.model, args.output, args.var, overrides, args.final_time,
+                           title=args.title))
         return 0
     if args.command == "sweep":
         _dump(sweep_parameter(args.model, args.parameter, args.values, args.var))

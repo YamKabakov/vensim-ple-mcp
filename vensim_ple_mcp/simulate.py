@@ -141,6 +141,34 @@ def list_parameters(model_path: str | Path) -> dict:
     return {"model": str(_resolve(model_path)), "time": time, "constants": constants, "variables": others}
 
 
+def simulate_frame(
+    model_path: str | Path,
+    overrides: dict[str, float] | None = None,
+    variables: list[str] | None = None,
+    final_time: float | None = None,
+    time_step: float | None = None,
+) -> pd.DataFrame:
+    """Run one simulation and return full-resolution results indexed by time."""
+    model = load_model(model_path)
+    columns = variables or _default_columns(model)
+    with _quiet_pysd():
+        results = model.run(
+            params=dict(overrides or {}),
+            return_columns=columns,
+            final_time=final_time,
+            time_step=time_step,
+            reload=True,
+        )
+    results.index.name = "time"
+    return results
+
+
+def units_of(model_path: str | Path) -> dict[str, str]:
+    """Map each variable's real name to its units, as written in the model."""
+    doc = load_model(model_path).doc
+    return {row["Real Name"]: row.get("Units") or "" for _, row in doc.iterrows()}
+
+
 def run_model(
     model_path: str | Path,
     overrides: dict[str, float] | None = None,
@@ -154,17 +182,7 @@ def run_model(
 
     The full-resolution results can be written to csv_path for plotting or comparison.
     """
-    model = load_model(model_path)
-    columns = variables or _default_columns(model)
-    with _quiet_pysd():
-        results = model.run(
-            params=dict(overrides or {}),
-            return_columns=columns,
-            final_time=final_time,
-            time_step=time_step,
-            reload=True,
-        )
-    results.index.name = "time"
+    results = simulate_frame(model_path, overrides, variables, final_time, time_step)
 
     output: dict[str, Any] = {
         "model": str(_resolve(model_path)),
