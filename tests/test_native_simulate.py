@@ -128,11 +128,14 @@ class SimulateInVensimTest(unittest.TestCase):
 @unittest.skipUnless(os.environ.get("VENSIM_LIVE") == "1", "set VENSIM_LIVE=1 to drive real Vensim")
 class LiveVensimTest(unittest.TestCase):
     def test_simulates_in_real_vensim(self) -> None:
-        with tempfile.TemporaryDirectory() as tmp:
-            model = Path(tmp) / "bass.mdl"
-            shutil.copyfile(BASS, model)
-            result = simulate_in_vensim(model, "live_check")
-            self.assertTrue(Path(result["dataset"]).stat().st_size > 0)
+        # Not a temporary directory: the model stays open in Vensim after the test, and
+        # Vensim's autosave raises "Unable to make automated backup" once its folder is gone.
+        folder = Path.home() / ".cache" / "vensim-ple-mcp" / "live-test"
+        folder.mkdir(parents=True, exist_ok=True)
+        model = folder / "bass.mdl"
+        shutil.copyfile(BASS, model)
+        result = simulate_in_vensim(model, "live_check")
+        self.assertTrue(Path(result["dataset"]).stat().st_size > 0)
 
 
 if __name__ == "__main__":

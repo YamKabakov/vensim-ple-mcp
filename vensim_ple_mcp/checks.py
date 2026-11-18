@@ -191,7 +191,7 @@ class _Expression:
             raise SyntaxError(value)
 
     def unit_issue(self, message: str) -> None:
-        self.issues.append(Issue("warning", "units", self.variable, message))
+        self.issues.append(Issue("warning", "units", self.variable, f"{self.variable}: {message}"))
 
     # -- grammar: comparison < additive < multiplicative < power < unary < primary
 

@@ -63,6 +63,8 @@ class EquationChecksTest(unittest.TestCase):
         text = replace_equation(BASS, "Adoption Rate", "Adoption from Advertising + Total Population")
         found = issues(text, "units")
         self.assertTrue(any("person/year and person" in i["message"] for i in found), found)
+        # The message names the variable, since validate_model reports messages alone.
+        self.assertTrue(any(i["message"].startswith("Adoption Rate: adds") for i in found), found)
 
     def test_equation_units_differ_from_declared(self) -> None:
         text = replace_equation(BASS, "Adoption from Advertising", "Advertising Effectiveness * Potential Adopters", unit="Person")

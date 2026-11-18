@@ -619,6 +619,7 @@ class MdlDocument:
         near: str | None = None,
         view_name: str | None = None,
     ) -> None:
+        label = {"stock": "level", "rate": "flow"}.get(kind, kind)
         kind = {"stock": "level", "constant": "auxiliary", "rate": "flow"}.get(kind, kind)
         if kind not in {"auxiliary", "level", "flow"}:
             raise EditError(f"unsupported kind {kind!r}; use auxiliary, constant, level or flow")
@@ -647,7 +648,7 @@ class MdlDocument:
             raise EditError("source and target apply to flows only")
 
         self._insert_block(_format_block(written, expression, unit.strip(), note))
-        self.changes.append(f"added {kind} {written} = {expression}")
+        self.changes.append(f"added {label} {written} = {expression}")
         if kind == "flow":
             for stock, sign in ((source, "-"), (target, "+")):
                 if stock:
@@ -669,9 +670,48 @@ class MdlDocument:
             self._draw_flow(view, written, source, target, x, y)
         else:
             self._draw_variable(view, written, kind, x, y, near)
+        self._gather_unconnected_inputs(view.name, written)
         self.sync_links(written)
         for dependent in self.dependents(written):
             self.sync_links(dependent.name, remove=False)
+
+    def _gather_unconnected_inputs(self, view_name: str, name: str) -> None:
+        """Move constants the new variable uses next to it if nothing else connects them.
+
+        A constant added before the variable that uses it has nowhere sensible to go, so
+        it is parked at the edge of the diagram; once its first user exists, put it near
+        that user instead of leaving a long arrow across the view.
+        """
+        view = next(v for v in self.views() if v.name == view_name)
+        target = view.instances(name)
+        if not target:
+            return
+        target = target[0]
+        attached = {a.source for a in view.arrows()} | {a.target for a in view.arrows()}
+        edits: dict[int, str] = {}
+        for ref in self.references(self.block(name)):
+            records = view.instances(ref)
+            if len(records) != 1:
+                continue
+            record = records[0]
+            if record.id in attached or record.shape in (3, 40):  # stocks and flow labels stay
+                continue
+            try:
+                if self.references(self.block(ref)):
+                    continue  # only constants: a computed variable has inputs of its own
+            except EditError:
+                continue
+            occupied = [_record_box(r) for r in view.records if r.type != 1 and r.id != record.id]
+            occupied += _line_samples(view, physical=True)
+            half = record.half
+            x, y = _free_spot((target.x, target.y + 60), [(0, 0, *half)], occupied)
+            if math.hypot(x - record.x, y - record.y) < 150:
+                continue
+            record.fields[3], record.fields[4] = str(int(x)), str(int(y))
+            edits[record.line] = record.text()
+            self.changes.append(f"moved {record.name} to ({int(x)}, {int(y)}), next to {name}")
+        if edits:
+            self._set_lines(edits, {})
 
     def _occupied(self, view: View) -> list[tuple[float, float, float, float]]:
         return [_record_box(r) for r in view.records if r.type != 1]
@@ -713,6 +753,10 @@ class MdlDocument:
         label_half = (_label_width(name.strip('"')) // 2, AUX_HALF_HEIGHT)
         occupied = self._occupied(view)
         cloud: tuple[float, float] | None = None
+        moved: dict[int, str] = {}
+        if source_obj and target_obj and (x is None or y is None):
+            moved = self._align_free_stock(view, source_obj, target_obj, label_half)
+            occupied = self._occupied(view)
         if source_obj and target_obj:
             vertical = abs(target_obj.x - source_obj.x) < abs(target_obj.y - source_obj.y)
             if x is not None and y is not None:
@@ -803,9 +847,65 @@ class MdlDocument:
                 f"-1--1--1,,1|({mid[0]},{mid[1]})|"
             )
             next_id += 1
-        self._set_lines({}, {view.end: lines})
+        self._set_lines(moved, {view.end: lines})
         ends_text = f"{source or 'cloud'} -> {target or 'cloud'}"
         self.changes.append(f"drew flow {name} ({ends_text}) at ({vx}, {vy}) on view {view.name!r}")
+
+    def _align_free_stock(self, view, source, target, label_half) -> dict[int, str]:
+        """Move a stock that nothing is attached to yet into line with the other end.
+
+        A stock added on its own is placed without knowing where its flows will go, so the
+        first flow joining it to the rest of the model would cross the diagram at an angle.
+        If exactly one end has no arrows or pipes, put it straight below, above, right or
+        left of the other end, wherever the stock, valve, label and pipe are clear.
+        Returns the edited sketch line for the moved stock (empty if nothing moved).
+        """
+        attached = {a.source for a in view.arrows()} | {a.target for a in view.arrows()}
+        free = [s for s in (target, source) if s.id not in attached]
+        if len(free) != 1:
+            return {}
+        stock = free[0]
+        anchor = source if stock is target else target
+        anchor_box = _record_box(anchor)
+        # Arrows and pipes leaving the connected stock start inside its box; only what
+        # lies outside it can block the new pipe.
+        lines = [
+            b for b in _line_samples(view, physical=True) + _line_samples(view, physical=False)
+            if not _overlaps(b, [anchor_box], 8)
+        ]
+        occupied = [
+            _record_box(r) for r in view.records if r.type != 1 and r.id not in (stock.id, anchor.id)
+        ]
+        # Outflows branch downward first, inflows come from above first.
+        sides = [(0, 1), (0, -1), (1, 0), (-1, 0)] if stock is target else [(0, -1), (0, 1), (-1, 0), (1, 0)]
+        for scale in (1.0, 1.3, 1.6, 2.0):
+            for dx, dy in sides:
+                vertical = dy != 0
+                gap = 2 * (DOWN_VALVE if vertical else SIDE_VALVE) * scale
+                sx, sy = anchor.x + dx * gap, anchor.y + dy * gap
+                vx, vy = (anchor.x + sx) / 2, (anchor.y + sy) / 2
+                label = (vx + label_half[0] + 14, vy) if vertical else (vx, vy + 30)
+                boxes = [_box(sx, sy, *stock.half), _box(vx, vy, 6, 8), _box(*label, *label_half)]
+                steps = max(1, int(gap / 10))
+                pipe = [
+                    _box(anchor.x + (sx - anchor.x) * i / steps, anchor.y + (sy - anchor.y) * i / steps, 2, 2)
+                    for i in range(1, steps)
+                ]
+                pipe = [b for b in pipe if not _overlaps(b, [anchor_box, boxes[0]], -2)]
+                everything = boxes + pipe
+                if not all(b[0] >= 10 and b[1] >= 60 for b in everything):
+                    continue
+                if any(_overlaps(b, occupied, 8) for b in everything):
+                    continue
+                if any(_overlaps(b, lines, 2) for b in everything):
+                    continue
+                stock.fields[3], stock.fields[4] = str(int(sx)), str(int(sy))
+                self.changes.append(
+                    f"moved {stock.name} to ({int(sx)}, {int(sy)}) so the flow from "
+                    f"{source.name} to {target.name} runs straight"
+                )
+                return {stock.line: stock.text()}
+        return {}
 
     def _between_stocks(self, view, source, target, label_half, vertical):
         """Valve position for a flow joining two stocks.

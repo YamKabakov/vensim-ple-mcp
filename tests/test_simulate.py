@@ -30,6 +30,11 @@ class SimulateTest(unittest.TestCase):
         constants = {item["name"]: item["value"] for item in info["constants"]}
         self.assertEqual(constants["Churn Fraction"], 0.025)
         self.assertEqual(info["time"]["final_time"], 60)
+        # Time is PySD's clock, not a model variable, and nothing is reported as NaN.
+        self.assertNotIn("Time", [item["name"] for item in info["variables"]])
+        for item in info["constants"] + info["variables"]:
+            self.assertIsInstance(item["units"], str, item)
+            self.assertIsInstance(item["type"], str, item)
 
     def test_run_returns_summary_and_downsampled_series(self) -> None:
         result = run_model(self.model, max_points=7)

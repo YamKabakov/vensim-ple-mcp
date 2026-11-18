@@ -206,6 +206,60 @@ class EditorTest(unittest.TestCase):
         self.assertEqual(expressions["Former Adopters"], "INTEG ( 0, 0 )")
         self.assertEqual(expressions["Potential Adopters"], "INTEG ( -Adoption Rate, Total Population )")
 
+    def test_new_stock_is_moved_into_line_with_its_first_flow(self) -> None:
+        # A stock added on its own lands wherever there is room; its first flow should
+        # pull it straight below the connected stock instead of crossing the diagram.
+        result = self.edit("add_variable", name="Former Adopters", equation="INTEG(0, 0)", unit="Person", kind="level")
+        self.assertIn("added level Former Adopters = INTEG(0, 0)", result["changes"])
+        result = self.edit(
+            "add_variable", name="Churn", equation="Adopters * 0.1", unit="Person/Year",
+            kind="flow", source="Adopters", target="Former Adopters",
+        )
+        self.assertTrue(any(c.startswith("moved Former Adopters") for c in result["changes"]), result)
+        self.assertFalse(any("at an angle" in w for w in result["warnings"]), result)
+        self.assertFalse(any("no clear path" in w for w in result["warnings"]), result)
+        objects = parse_sketch(self.model.read_text(encoding="utf-8"))[0]
+        stocks = {o.name: o for o in objects if o.kind == "level"}
+        valve = [o for o in objects if o.kind == "valve"][-1]
+        source, target = stocks["Adopters"], stocks["Former Adopters"]
+        self.assertTrue(
+            (source.x == valve.x == target.x) or (source.y == valve.y == target.y),
+            (source, valve, target),
+        )
+        from vensim_ple_mcp.parser import validate_model
+
+        self.assertEqual(validate_model(self.model)["metrics"]["overlaps"], 0)
+
+    def test_constant_added_first_moves_next_to_its_first_user(self) -> None:
+        self.edit("add_variable", name="Churn Rate", equation="0.1", unit="1/Year", kind="constant")
+        result = self.edit(
+            "add_variable", name="Churn", equation="Adopters * Churn Rate", unit="Person/Year",
+            kind="flow", source="Adopters",
+        )
+        self.assertTrue(any(c.startswith("moved Churn Rate") for c in result["changes"]), result)
+        objects = {o.name: o for o in parse_sketch(self.model.read_text(encoding="utf-8"))[0] if o.name}
+        constant, flow = objects["Churn Rate"], objects["Churn"]
+        self.assertLess(abs(constant.x - flow.x) + abs(constant.y - flow.y), 250)
+        # A constant already wired to something stays where the modeller put it.
+        result = self.edit(
+            "add_variable", name="Churn Check", equation="Churn Rate * 2", unit="1/Year",
+        )
+        self.assertFalse(any(c.startswith("moved") for c in result["changes"]), result)
+
+    def test_connected_stocks_are_never_moved(self) -> None:
+        before = {o.name: (o.x, o.y) for o in parse_sketch(self.model.read_text(encoding="utf-8"))[0] if o.kind == "level"}
+        result = self.edit(
+            "add_variable", name="Lapse", equation="Adopters * 0.1", unit="Person/Year",
+            kind="flow", source="Adopters", target="Potential Adopters",
+        )
+        self.assertFalse(any(c.startswith("moved") for c in result["changes"]), result)
+        after = {o.name: (o.x, o.y) for o in parse_sketch(self.model.read_text(encoding="utf-8"))[0] if o.kind == "level"}
+        self.assertEqual(before, after)
+
+    def test_added_constant_is_reported_as_constant(self) -> None:
+        result = self.edit("add_variable", name="Churn Rate", equation="0.1", unit="1/Year", kind="constant")
+        self.assertIn("added constant Churn Rate = 0.1", result["changes"])
+
     def test_unknown_name_suggests_close_matches(self) -> None:
         result = edit_model(self.model, "set_equation", name="Adoption Rat", equation="0")
         self.assertFalse(result["ok"])

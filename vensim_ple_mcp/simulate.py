@@ -118,13 +118,18 @@ def list_parameters(model_path: str | Path) -> dict:
     """List the model's constants (what can be overridden) and its other variables."""
     model = load_model(model_path)
     doc = model.doc
-    controls = {"INITIAL TIME", "FINAL TIME", "TIME STEP", "SAVEPER"}
+    # Time is PySD's built-in clock, not a model variable.
+    controls = {"INITIAL TIME", "FINAL TIME", "TIME STEP", "SAVEPER", "Time", "TIME"}
+
+    def text(value) -> str:
+        return value if isinstance(value, str) else ""  # pandas leaves gaps as NaN
+
     constants, others = [], []
     for _, row in doc.iterrows():
         name = row["Real Name"]
         if name in controls:
             continue
-        entry = {"name": name, "units": row.get("Units") or "", "type": row.get("Type")}
+        entry = {"name": name, "units": text(row.get("Units")), "type": text(row.get("Type"))}
         if row.get("Type") == "Constant":
             try:
                 entry["value"] = _clean(model[name])

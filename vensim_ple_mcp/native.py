@@ -158,6 +158,12 @@ on alertText(p)
     return missing value
 end alertText
 
+-- Alerts that are not about this run: Vensim's periodic autosave of another open model
+-- fails when that model's folder is gone. Dismiss them and carry on.
+on incidental(msg)
+    return msg contains "automated backup"
+end incidental
+
 on clickAlert(p, labels)
     tell application "System Events"
         repeat with w in (windows of p)
@@ -191,13 +197,20 @@ on run argv
     set timeoutSeconds to (item 5 of argv) as integer
 
     tell application "System Events"
-        set p to process processName
         -- Vensim stays in the background except for the moment its Simulation menu
         -- is needed (it only builds that menu while active); then focus goes back.
         set previous to first process whose frontmost is true
+        repeat 80 times
+            if exists process processName then exit repeat
+            delay 0.25
+        end repeat
+        if not (exists process processName) then return "alert:Vensim did not start."
+        set p to process processName
 
         -- Wait for the model's window; stop on any alert Vensim raises while loading.
         set found to false
+        set activated to false
+        set waited to 0
         repeat (timeoutSeconds * 4) times
             set msg to my alertText(p)
             if msg is not missing value then
@@ -207,8 +220,11 @@ on run argv
                 else if msg contains "autosave" then
                     -- Simulate the file that was asked for, not Vensim's autosave copy.
                     my clickAlert(p, {"No"})
+                else if my incidental(msg) then
+                    my clickAlert(p, {"OK"})
                 else
                     my clickAlert(p, {"OK", "Cancel", "No"})
+                    if activated then my handBack(previous, p)
                     return "alert:" & msg
                 end if
             end if
@@ -216,9 +232,19 @@ on run argv
                 if (name of w) contains (": " & modelName) then set found to true
             end repeat
             if found then exit repeat
+            -- Launched in the background, Vensim does not finish starting (no splash, no
+            -- model window) until it is activated once; bring it forward if it is stuck.
+            set waited to waited + 1
+            if (not activated) and waited is greater than or equal to 6 and (count of windows of p) is 0 then
+                set frontmost of p to true
+                set activated to true
+            end if
             delay 0.25
         end repeat
-        if not found then return "alert:Vensim did not show " & modelName & " in time."
+        if not found then
+            if activated then my handBack(previous, p)
+            return "alert:Vensim did not show " & modelName & " in time."
+        end if
 
         set frontmost of p to true
         repeat 40 times
@@ -227,13 +253,29 @@ on run argv
         end repeat
         click menu item "Simulation Control" of menu 1 of menu bar item "Simulation" of menu bar 1 of p
         -- A model with errors raises "cannot be simulated" instead of opening the dialog.
+        set retried to false
         repeat 40 times
             if exists window "Simulation Control" of p then exit repeat
             set msg to my alertText(p)
             if msg is not missing value then
-                my clickAlert(p, {"No", "OK", "Cancel"})
-                my handBack(previous, p)
-                return "alert:" & msg
+                if msg contains "already open" or my incidental(msg) then
+                    -- "already open" is raised when the model was already open in Vensim
+                    -- and can arrive after the window was found; either way the menu
+                    -- click may have been swallowed. Dismiss it and ask for the dialog again.
+                    my clickAlert(p, {"OK", "Yes"})
+                    if not retried then
+                        set retried to true
+                        delay 0.25
+                        set frontmost of p to true
+                        if not (exists window "Simulation Control" of p) then
+                            click menu item "Simulation Control" of menu 1 of menu bar item "Simulation" of menu bar 1 of p
+                        end if
+                    end if
+                else
+                    my clickAlert(p, {"No", "OK", "Cancel"})
+                    my handBack(previous, p)
+                    return "alert:" & msg
+                end if
             end if
             delay 0.25
         end repeat
@@ -270,7 +312,9 @@ on run argv
             delay 0.25
             set msg to my alertText(p)
             if msg is not missing value then
-                if msg contains "already exists" then
+                if my incidental(msg) then
+                    my clickAlert(p, {"OK"})
+                else if msg contains "already exists" then
                     if overwrite then
                         my clickAlert(p, {"Yes"})
                     else
