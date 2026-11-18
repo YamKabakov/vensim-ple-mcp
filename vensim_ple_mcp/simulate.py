@@ -8,14 +8,29 @@ the .mdl.
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 import hashlib
 import math
 import os
 from pathlib import Path
 import shutil
-from typing import Any
+from typing import Any, Iterator
+import warnings
 
 import pandas as pd
+
+
+@contextmanager
+def _quiet_pysd() -> Iterator[None]:
+    """Hide deprecation warnings raised inside PySD (pandas 3 and chardet API changes).
+
+    They come from PySD's own code, not the model or this package, and would otherwise be
+    printed on every run. PySD's other warnings, such as unsupported Vensim functions,
+    are left alone.
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, module=r"pysd(\.|$)")
+        yield
 
 
 def _cache_root() -> Path:
@@ -33,6 +48,11 @@ def _resolve(model_path: str | Path) -> Path:
 
 def load_model(model_path: str | Path):
     """Translate (or reuse a cached translation of) a .mdl and return a PySD model."""
+    with _quiet_pysd():
+        return _load_model(model_path)
+
+
+def _load_model(model_path: str | Path):
     import pysd
 
     model = _resolve(model_path)
@@ -136,13 +156,14 @@ def run_model(
     """
     model = load_model(model_path)
     columns = variables or _default_columns(model)
-    results = model.run(
-        params=dict(overrides or {}),
-        return_columns=columns,
-        final_time=final_time,
-        time_step=time_step,
-        reload=True,
-    )
+    with _quiet_pysd():
+        results = model.run(
+            params=dict(overrides or {}),
+            return_columns=columns,
+            final_time=final_time,
+            time_step=time_step,
+            reload=True,
+        )
     results.index.name = "time"
 
     output: dict[str, Any] = {
@@ -184,7 +205,10 @@ def sweep_parameter(
     runs = []
     for value in values:
         params = {**(base_overrides or {}), parameter: value}
-        results = model.run(params=params, return_columns=columns, final_time=final_time, reload=True)
+        with _quiet_pysd():
+            results = model.run(
+                params=params, return_columns=columns, final_time=final_time, reload=True
+            )
         runs.append(
             {
                 "value": _clean(value),
