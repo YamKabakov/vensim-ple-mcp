@@ -72,10 +72,6 @@ def render_svg(model_path: str | Path, output_path: str | Path) -> Path:
     if not objects:
         raise ValueError(f"no sketch objects found in {source}")
     object_map = {obj.object_id: obj for obj in objects}
-    max_x = max(obj.x + obj.width for obj in objects)
-    max_y = max(obj.y + obj.height for obj in objects)
-    width = max(960, int(max_x + 80))
-    height = max(640, int(max_y + 70))
     title = views[0] if views else source.stem.replace("_", " ")
     title_object = next(
         (
@@ -88,8 +84,22 @@ def render_svg(model_path: str | Path, output_path: str | Path) -> Path:
     if title_object is not None:
         title = title_object.name
 
+    # Fit the canvas to the drawing (the title comment aside, it is drawn centred above).
+    drawn = [obj for obj in objects if obj is not title_object]
+    xs = [v for obj in drawn for v in (obj.x - obj.width, obj.x + obj.width)]
+    ys = [v for obj in drawn for v in (obj.y - obj.height, obj.y + obj.height)]
+    for arrow in arrows:
+        for cx, cy in arrow.control_points:
+            if cx or cy:
+                xs.append(cx)
+                ys.append(cy)
+    pad, title_band = 44, 56
+    left, top = min(xs) - pad, min(ys) - pad - title_band
+    width = int(max(xs) + pad - left)
+    height = int(max(ys) + pad - top)
+
     svg = [
-        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="{left:.0f} {top:.0f} {width} {height}">',
         "<defs>",
         '<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".12"/></filter>',
         '<marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#475569"/></marker>',
@@ -97,8 +107,8 @@ def render_svg(model_path: str | Path, output_path: str | Path) -> Path:
         "<style>",
         ".title{font:700 22px Inter,Arial,sans-serif;fill:#0f172a;text-anchor:middle}.node-label{font:600 13px Inter,Arial,sans-serif;fill:#1e293b;text-anchor:middle}.flow-label{font:600 12px Inter,Arial,sans-serif;fill:#0f766e;text-anchor:middle}.small-label{font:500 12px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle}.info{fill:none;stroke:#64748b;stroke-width:1.8;marker-end:url(#arrow)}.pipe{fill:none;stroke:#0f766e;stroke-width:4;marker-end:url(#flow-arrow)}.pipe.tail{marker-end:none}.sign{font:700 14px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:3}.loop{font:700 13px Inter,Arial,sans-serif;text-anchor:middle}",
         "</style></defs>",
-        f'<rect width="100%" height="100%" rx="18" fill="#f8fafc"/><rect x="20" y="20" width="{width - 40}" height="{height - 40}" rx="16" fill="#fff" stroke="#e2e8f0"/>',
-        f'<text class="title" x="{width / 2:.0f}" y="52">{escape(title)}</text>',
+        f'<rect x="{left:.0f}" y="{top:.0f}" width="{width}" height="{height}" rx="16" fill="#fff" stroke="#e2e8f0"/>',
+        f'<text class="title" x="{left + width / 2:.0f}" y="{top + 40:.0f}">{escape(title)}</text>',
     ]
     signs: list[str] = []  # drawn last, so node boxes don't cover them
     for arrow in arrows:

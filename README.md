@@ -1,10 +1,16 @@
 # vensim-ple-mcp
 
-An MCP server that lets Claude (or any MCP client) build, inspect, and **simulate** Vensim system dynamics models, built for **Vensim PLE on macOS**.
+**Build, edit, and simulate Vensim models by talking to Claude.**
 
-Vensim PLE has no scripting interface, DLL, or batch mode. This server works on the `.mdl` text file directly and runs simulations through [PySD](https://github.com/SDXorg/pysd), so an assistant can answer questions like "what happens to peak adoption if word of mouth doubles?" without Vensim DSS. PLE stays the place you open the model, run Check Model and Units Check, and present it.
+Vensim PLE, the free edition, has no scripting interface, DLL, or batch mode. This MCP server works around that: it edits the `.mdl` file directly and keeps the diagram in step, simulates with [PySD](https://github.com/SDXorg/pysd), and on macOS can run the model inside Vensim itself. So you can ask:
 
-![Bass diffusion example](examples/bass_diffusion.svg)
+> *Add a vaccination flow out of Susceptible at 1% a day. What happens to the peak?*
+
+and get back an updated model and diagram, plus the answer: the outbreak peaks at 57 infected instead of 641.
+
+![SIR epidemic model with a vaccination branch and labelled feedback loops](examples/sir_epidemic.svg)
+
+<sub>[`examples/sir_epidemic.mdl`](examples/sir_epidemic.mdl), drawn by `render_vensim_preview` with loops labelled by `find_feedback_loops`.</sub>
 
 ## Tools
 

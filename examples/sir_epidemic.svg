@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1025" height="513" viewBox="77 4 1025 513">
+<defs>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".12"/></filter>
+<marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#475569"/></marker>
+<marker id="flow-arrow" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="9" refX="11" refY="4.5" orient="auto"><path d="M0,0 L12,4.5 L0,9 Z" fill="#0f766e"/></marker>
+<style>
+.title{font:700 22px Inter,Arial,sans-serif;fill:#0f172a;text-anchor:middle}.node-label{font:600 13px Inter,Arial,sans-serif;fill:#1e293b;text-anchor:middle}.flow-label{font:600 12px Inter,Arial,sans-serif;fill:#0f766e;text-anchor:middle}.small-label{font:500 12px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle}.info{fill:none;stroke:#64748b;stroke-width:1.8;marker-end:url(#arrow)}.pipe{fill:none;stroke:#0f766e;stroke-width:4;marker-end:url(#flow-arrow)}.pipe.tail{marker-end:none}.sign{font:700 14px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:3}.loop{font:700 13px Inter,Arial,sans-serif;text-anchor:middle}
+</style></defs>
+<rect x="77" y="4" width="1025" height="513" rx="16" fill="#fff" stroke="#e2e8f0"/>
+<text class="title" x="590" y="44">SIR Epidemic with Vaccination</text>
+<path class="pipe tail" d="M 494 231 L 398 231"/>
+<path class="pipe" d="M 508 231 L 604 231"/>
+<path class="pipe tail" d="M 824 231 L 728 231"/>
+<path class="pipe" d="M 838 231 L 934 231"/>
+<path class="info" d="M 474 136 L 498 249"/>
+<path class="info" d="M 624 136 L 513 249"/>
+<path class="info" d="M 398 242 L 443 250"/>
+<path class="info" d="M 604 242 L 559 250"/>
+<path class="info" d="M 355 136 L 487 249"/>
+<path class="info" d="M 728 242 L 777 251"/>
+<path class="info" d="M 874 136 L 835 249"/>
+<path class="info" d="M 336 136 L 336 204"/>
+<path class="info" d="M 479 334 L 373 258"/>
+<path class="info" d="M 523 334 L 629 258"/>
+<path class="pipe tail" d="M 336 328 L 336 258"/>
+<path class="pipe" d="M 336 344 L 336 419"/>
+<path class="info" d="M 321 258 L 285 320"/>
+<path class="info" d="M 213 394 L 259 352"/>
+<rect x="274" y="204" width="124" height="54" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" filter="url(#shadow)"/>
+<text class="node-label" x="336" y="235">Susceptible</text>
+<rect x="604" y="204" width="124" height="54" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" filter="url(#shadow)"/>
+<text class="node-label" x="666" y="235">Infected</text>
+<rect x="934" y="204" width="124" height="54" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" filter="url(#shadow)"/>
+<text class="node-label" x="996" y="235">Recovered</text>
+<path d="M493,224 L501,231 L493,238 Z M509,224 L501,231 L509,238 Z" fill="#14b8a6" stroke="#0f766e"/>
+<text class="flow-label" x="501" y="265">Infection Rate</text>
+<path d="M823,224 L831,231 L823,238 Z M839,224 L831,231 L839,238 Z" fill="#14b8a6" stroke="#0f766e"/>
+<text class="flow-label" x="831" y="265">Recovery Rate</text>
+<rect x="436" y="334" width="130" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="501" y="354">Initial Infected</text>
+<rect x="271" y="104" width="130" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="336" y="124">Total Population</text>
+<rect x="419" y="104" width="102" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="470" y="124">Contact Rate</text>
+<rect x="565" y="104" width="150" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="640" y="124">Transmission Probability</text>
+<rect x="815" y="104" width="130" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="880" y="124">Illness Duration</text>
+<rect x="290" y="419" width="92" height="54" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" filter="url(#shadow)"/>
+<text class="node-label" x="336" y="450">Vaccinated</text>
+<rect x="121" y="394" width="150" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="196" y="414">Vaccination Fraction</text>
+<path d="M328,329 L336,336 L328,343 Z M344,329 L336,336 L344,343 Z" fill="#14b8a6" stroke="#0f766e"/>
+<text class="flow-label" x="276" y="340">Vaccination Rate</text>
+<circle cx="610" cy="192" r="15" fill="#fff" stroke="#b45309" stroke-width="2" stroke-dasharray="70 10"/><text class="loop" x="610" y="197" fill="#b45309">R1</text>
+<circle cx="760" cy="192" r="15" fill="#fff" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="70 10"/><text class="loop" x="760" y="197" fill="#1d4ed8">B1</text>
+<circle cx="440" cy="160" r="15" fill="#fff" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="70 10"/><text class="loop" x="440" y="165" fill="#1d4ed8">B2</text>
+<circle cx="374" cy="300" r="15" fill="#fff" stroke="#1d4ed8" stroke-width="2" stroke-dasharray="70 10"/><text class="loop" x="374" y="305" fill="#1d4ed8">B3</text>
+<text class="sign" x="484" y="234">+</text>
+<text class="sign" x="528" y="224">+</text>
+<text class="sign" x="432" y="264">+</text>
+<text class="sign" x="566" y="244">+</text>
+<text class="sign" x="454" y="239">-</text>
+<text class="sign" x="765" y="264">+</text>
+<text class="sign" x="834" y="228">-</text>
+<text class="sign" x="326" y="195">+</text>
+<text class="sign" x="400" y="270">-</text>
+<text class="sign" x="613" y="286">+</text>
+<text class="sign" x="284" y="308">+</text>
+<text class="sign" x="256" y="373">+</text>
+</svg>
