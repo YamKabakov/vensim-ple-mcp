@@ -54,6 +54,23 @@ def _sign_position(source, target, controls) -> tuple[float, float]:
     return x - dy / length * 10, y + dx / length * 10
 
 
+def _segment_distance(point, segment) -> float:
+    (px, py), ((ax, ay), (bx, by)) = point, segment
+    dx, dy = bx - ax, by - ay
+    length = dx * dx + dy * dy
+    t = 0.0 if length == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / length))
+    return ((px - ax - t * dx) ** 2 + (py - ay - t * dy) ** 2) ** 0.5
+
+
+def _off_pipes(point, pipes) -> tuple[float, float]:
+    """Move a polarity sign off any pipe it would sit on (a '-' there reads as a blot)."""
+    x, y = point
+    for dx, dy in ((0, 0), (0, -12), (0, 12), (-12, 0), (12, 0), (0, -20), (0, 20), (-20, 0), (20, 0)):
+        if all(_segment_distance((x + dx, y + dy), pipe) > 10 for pipe in pipes):
+            return x + dx, y + dy
+    return x, y
+
+
 def _label(name: str, x: float, y: float, width: float, css_class: str) -> str:
     words = name.replace("_", " ").split()
     if len(words) <= 2 or width > 80:
@@ -111,6 +128,12 @@ def render_svg(model_path: str | Path, output_path: str | Path) -> Path:
         f'<text class="title" x="{left + width / 2:.0f}" y="{top + 40:.0f}">{escape(title)}</text>',
     ]
     signs: list[str] = []  # drawn last, so node boxes don't cover them
+    pipes = [
+        (_attachment(object_map[a.source_id], object_map[a.target_id]),
+         _attachment(object_map[a.target_id], object_map[a.source_id]))
+        for a in arrows
+        if a.kind == "physical" and a.source_id in object_map and a.target_id in object_map
+    ]
     for arrow in arrows:
         source_obj = object_map.get(arrow.source_id)
         target_obj = object_map.get(arrow.target_id)
@@ -122,7 +145,7 @@ def render_svg(model_path: str | Path, output_path: str | Path) -> Path:
             css_class = "info"
         svg.append(f'<path class="{css_class}" d="{_curve(source_obj, target_obj, arrow.control_points)}"/>')
         if arrow.kind == "information" and arrow.polarity:
-            sx, sy = _sign_position(source_obj, target_obj, arrow.control_points)
+            sx, sy = _off_pipes(_sign_position(source_obj, target_obj, arrow.control_points), pipes)
             signs.append(f'<text class="sign" x="{sx:.0f}" y="{sy + 5:.0f}">{arrow.polarity}</text>')
 
     for obj in objects:

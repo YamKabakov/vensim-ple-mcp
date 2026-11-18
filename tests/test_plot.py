@@ -61,3 +61,13 @@ class PlotResultsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SignPlacementTest(unittest.TestCase):
+    def test_polarity_sign_is_moved_off_a_pipe(self) -> None:
+        from vensim_ple_mcp.renderer import _off_pipes, _segment_distance
+
+        pipe = ((0.0, 100.0), (300.0, 100.0))
+        moved = _off_pipes((150.0, 102.0), [pipe])
+        self.assertGreater(_segment_distance(moved, pipe), 10)
+        self.assertEqual(_off_pipes((150.0, 60.0), [pipe]), (150.0, 60.0))

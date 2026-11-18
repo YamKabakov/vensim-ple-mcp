@@ -22,7 +22,7 @@ from pathlib import Path
 import re
 import shutil
 
-from .layout import _label_width
+from .layout import Shape, _choose_control, _label_width, _route_points
 from .model import CONTROL_NAMES
 
 
@@ -401,8 +401,52 @@ def _line_samples(view: "View", physical: bool) -> list[tuple[float, float, floa
     return samples
 
 
-def _arrow_line(arrow_id: int, source: int, target: int) -> str:
-    return f"1,{arrow_id},{source},{target},0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|"
+def _arrow_line(
+    arrow_id: int, source: int, target: int, handle: tuple[int, int] | None = None
+) -> str:
+    """An information arrow; with a handle (a point on the arc) it is drawn curved."""
+    if handle is None:
+        return f"1,{arrow_id},{source},{target},0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|"
+    return f"1,{arrow_id},{source},{target},1,0,0,0,0,192,0,-1--1--1,,1|({handle[0]},{handle[1]})|"
+
+
+def _arrow_handle(view: "View", source: "Record", target: "Record") -> tuple[int, int] | None:
+    """Bend a new arrow around the objects and arrows in its way, as the generator does.
+
+    Returns Vensim's arc handle, or None when a straight arrow is clear.
+    """
+    objects = view.by_id()
+    valves = view.valve_of()
+    # A flow's own valve sits next to its label; arrows into the flow may pass it.
+    own = {source.id, target.id, valves.get(source.id), valves.get(target.id)}
+    shapes = [
+        Shape(str(r.id), r.name, "object", r.x, r.y, 2 * r.half[0], 2 * r.half[1])
+        for r in objects.values()
+        if r.id not in own
+    ]
+    paths = []
+    for arrow in view.arrows():
+        start, end = objects.get(arrow.source), objects.get(arrow.target)
+        if not start or not end:
+            continue
+        control = None
+        if not arrow.is_pipe and arrow.fields[4] == "1":
+            match = re.search(r"\|\((-?\d+),(-?\d+)\)\|", arrow.tail)
+            if match:
+                mx, my = int(match.group(1)), int(match.group(2))
+                control = (2 * mx - (start.x + end.x) / 2, 2 * my - (start.y + end.y) / 2)
+        paths.append(
+            (str(arrow.source), str(arrow.target), _route_points((start.x, start.y), control, (end.x, end.y)))
+        )
+    source_shape = Shape(str(source.id), source.name, "object", source.x, source.y, 2 * source.half[0], 2 * source.half[1])
+    target_shape = Shape(str(target.id), target.name, "object", target.x, target.y, 2 * target.half[0], 2 * target.half[1])
+    control, _ = _choose_control(source_shape, target_shape, shapes, paths, 0, 10**6, 10**6)
+    if control is None:
+        return None
+    return (
+        int(0.25 * source.x + 0.5 * control[0] + 0.25 * target.x),
+        int(0.25 * source.y + 0.5 * control[1] + 0.25 * target.y),
+    )
 
 
 # --------------------------------------------------------------------------- document
@@ -558,7 +602,9 @@ class MdlDocument:
                     if key in linked:
                         continue
                     source = min(sources, key=lambda s: math.hypot(s.x - target.x, s.y - target.y))
-                    new_lines.append(_arrow_line(next_id, source.id, target.id))
+                    new_lines.append(
+                        _arrow_line(next_id, source.id, target.id, _arrow_handle(view, source, target))
+                    )
                     next_id += 1
                     self.changes.append(f"added arrow {source.name} -> {target.name}")
             self._set_lines(edits, {view.end: new_lines} if new_lines else {})

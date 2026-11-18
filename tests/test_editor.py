@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 import shutil
 import tempfile
@@ -245,6 +246,38 @@ class EditorTest(unittest.TestCase):
             "add_variable", name="Churn Check", equation="Churn Rate * 2", unit="1/Year",
         )
         self.assertFalse(any(c.startswith("moved") for c in result["changes"]), result)
+
+    def test_new_arrow_bends_around_objects_in_its_way(self) -> None:
+        # Placed left of Potential Adopters, so a straight arrow from Adopters would run
+        # through the valve, the flow label and the Potential Adopters stock.
+        document = MdlDocument(self.model.read_text(encoding="utf-8"))
+        document.add_variable("Adopter Share", "Adopters / Total Population", "Dmnl", x=60, y=276)
+        view = document.views()[0]
+        objects = view.by_id()
+        share = view.instances("Adopter Share")[0]
+        adopters = view.instances("Adopters")[0]
+        arrow = next(a for a in view.arrows() if a.source == adopters.id and a.target == share.id)
+        self.assertEqual(arrow.fields[4], "1", arrow.text())  # curved
+        handle = tuple(int(v) for v in re.search(r"\((-?\d+),(-?\d+)\)", arrow.tail).groups())
+        control = (2 * handle[0] - (adopters.x + share.x) / 2, 2 * handle[1] - (adopters.y + share.y) / 2)
+        from vensim_ple_mcp.layout import _route_points
+
+        path = _route_points((adopters.x, adopters.y), control, (share.x, share.y))[2:-2]
+        blocker = view.instances("Potential Adopters")[0]
+        bx, by = blocker.x, blocker.y
+        hw, hh = blocker.half
+        self.assertFalse(
+            any(bx - hw <= x <= bx + hw and by - hh <= y <= by + hh for x, y in path), path
+        )
+        self.assertEqual(len(objects), len(view.by_id()))
+
+        # An arrow with nothing in its way stays straight.
+        document.set_equation("Adoption from Advertising", "Advertising Effectiveness * Total Population")
+        view = document.views()[0]
+        source = view.instances("Total Population")[0]
+        target = view.instances("Adoption from Advertising")[0]
+        arrow = next(a for a in view.arrows() if a.source == source.id and a.target == target.id)
+        self.assertEqual(arrow.fields[4], "0", arrow.text())
 
     def test_connected_stocks_are_never_moved(self) -> None:
         before = {o.name: (o.x, o.y) for o in parse_sketch(self.model.read_text(encoding="utf-8"))[0] if o.kind == "level"}
