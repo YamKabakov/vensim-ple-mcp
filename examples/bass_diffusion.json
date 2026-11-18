@@ -1,0 +1,33 @@
+{
+  "name": "bass_diffusion",
+  "title": "Bass Diffusion",
+  "simulation": {"initial_time": 0, "final_time": 30, "time_step": 0.125, "time_unit": "Year"},
+  "levels": [
+    {"name": "Potential Adopters", "equation": "INTEG ( -Adoption Rate, Total Population )", "unit": "Person"},
+    {"name": "Adopters", "equation": "INTEG ( Adoption Rate, 0 )", "unit": "Person"}
+  ],
+  "flows": [
+    {"name": "Adoption Rate", "equation": "Adoption from Advertising + Adoption from Word of Mouth",
+     "unit": "Person/Year", "source": "Potential Adopters", "target": "Adopters"}
+  ],
+  "variables": [
+    {"name": "Total Population", "equation": "1000", "unit": "Person", "kind": "constant"},
+    {"name": "Advertising Effectiveness", "equation": "0.03", "unit": "1/Year", "kind": "constant",
+     "note": "Bass innovation coefficient p"},
+    {"name": "Word of Mouth Strength", "equation": "0.38", "unit": "1/Year", "kind": "constant",
+     "note": "Bass imitation coefficient q"},
+    {"name": "Adoption from Advertising", "equation": "Advertising Effectiveness * Potential Adopters", "unit": "Person/Year"},
+    {"name": "Adoption from Word of Mouth",
+     "equation": "Word of Mouth Strength * Adopters * Potential Adopters / Total Population", "unit": "Person/Year"}
+  ],
+  "links": [
+    {"source": "Advertising Effectiveness", "target": "Adoption from Advertising", "polarity": "+"},
+    {"source": "Potential Adopters", "target": "Adoption from Advertising", "polarity": "+"},
+    {"source": "Word of Mouth Strength", "target": "Adoption from Word of Mouth", "polarity": "+"},
+    {"source": "Adopters", "target": "Adoption from Word of Mouth", "polarity": "+"},
+    {"source": "Potential Adopters", "target": "Adoption from Word of Mouth", "polarity": "+"},
+    {"source": "Total Population", "target": "Adoption from Word of Mouth", "polarity": "-"},
+    {"source": "Adoption from Advertising", "target": "Adoption Rate", "polarity": "+"},
+    {"source": "Adoption from Word of Mouth", "target": "Adoption Rate", "polarity": "+"}
+  ]
+}

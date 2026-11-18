@@ -1,0 +1,107 @@
+{UTF-8}
+
+Potential Adopters = INTEG ( -Adoption Rate, Total Population )
+	~	Person
+	~		|
+
+Adopters = INTEG ( Adoption Rate, 0 )
+	~	Person
+	~		|
+
+Adoption Rate = Adoption from Advertising + Adoption from Word of Mouth
+	~	Person/Year
+	~		|
+
+Total Population = 1000
+	~	Person
+	~		|
+
+Advertising Effectiveness = 0.03
+	~	1/Year
+	~	Bass innovation coefficient p	|
+
+Word of Mouth Strength = 0.38
+	~	1/Year
+	~	Bass imitation coefficient q	|
+
+Adoption from Advertising = Advertising Effectiveness * Potential Adopters
+	~	Person/Year
+	~		|
+
+Adoption from Word of Mouth = Word of Mouth Strength * Adopters * Potential Adopters / Total Population
+	~	Person/Year
+	~		|
+
+INITIAL TIME = 0
+	~	Year
+	~		|
+
+FINAL TIME = 30
+	~	Year
+	~		|
+
+TIME STEP = 0.125
+	~	Year
+	~		|
+
+SAVEPER = TIME STEP
+	~	Year
+	~		|
+
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*Main Model
+$148-163-184,0,Arial|12||30-41-59|51-65-85|71-85-105|219-234-254|248-250-252|96,96,100,0
+12,1,0,480,42,400,22,8,4,0,0,0,0,0,0
+Bass Diffusion
+11,2,0,480,315,6,8,34,3,0,0,1,0,0,0
+10,3,Adoption Rate,480,357,54,12,40,3,0,0,-1,0,0,0,2
+10,4,Potential Adopters,220,315,72,27,3,3,0,0,0,0,0,0
+10,5,Adopters,740,315,62,27,3,3,0,0,0,0,0,0
+10,6,Advertising Effectiveness,105,125,78,16,8,3,0,0,0,0,0,0
+10,7,Total Population,480,125,65,16,8,3,0,0,0,0,0,0
+10,8,Adoption from Word of Mouth,480,245,78,19,8,3,0,0,0,0,0,0
+10,9,Adoption from Advertising,480,515,78,19,8,3,0,0,0,0,0,0
+10,10,Word of Mouth Strength,855,125,78,16,8,3,0,0,0,0,0,0
+1,11,4,2,4,0,0,22,0,0,0,-1--1--1,,1|(350,315)|
+1,12,2,5,4,0,0,22,0,0,0,-1--1--1,,1|(610,315)|
+1,13,6,9,0,0,0,0,0,64,0,-1--1--1,+,1|(46,556)|
+1,14,4,9,0,0,0,0,0,64,0,-1--1--1,+,1|(350,415)|
+1,15,10,8,0,0,0,0,0,64,0,-1--1--1,+,1|(667,185)|
+1,16,5,8,0,0,0,0,0,64,0,-1--1--1,+,1|(610,280)|
+1,17,4,8,0,0,0,0,0,64,0,-1--1--1,+,1|(350,280)|
+1,18,7,8,0,0,0,0,0,64,0,-1--1--1,-,1|(480,185)|
+1,19,9,3,0,0,0,0,0,64,0,-1--1--1,+,1|(480,436)|
+1,20,8,3,0,0,0,0,0,64,0,-1--1--1,+,1|(404,301)|
+///---\\\
+:L<%^E!@
+5:Time
+19:100,0
+24:0
+25:0
+26:0
+23:0
+15:0,0,0,0,0,0
+27:0,
+34:0,
+42:0
+72:0
+73:0
+95:0
+96:0
+97:0
+77:0
+78:0
+102:1
+108:1
+93:0
+94:0
+92:0
+91:0
+90:0
+87:0
+75:
+43:
+103:8,8,8,3,8
+105:0,0,0,0,0,0,0,0,0,0
+104:Arial|12||30-41-59|51-65-85|-1--1--1|71-85-105|219-234-254|248-250-252

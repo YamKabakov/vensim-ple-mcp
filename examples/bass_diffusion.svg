@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1013" height="640" viewBox="0 0 1013 640">
+<defs>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".12"/></filter>
+<marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#475569"/></marker>
+<marker id="flow-arrow" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="9" refX="11" refY="4.5" orient="auto"><path d="M0,0 L12,4.5 L0,9 Z" fill="#0f766e"/></marker>
+<style>
+.title{font:700 22px Inter,Arial,sans-serif;fill:#0f172a;text-anchor:middle}.node-label{font:600 13px Inter,Arial,sans-serif;fill:#1e293b;text-anchor:middle}.flow-label{font:600 12px Inter,Arial,sans-serif;fill:#0f766e;text-anchor:middle}.small-label{font:500 12px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle}.info{fill:none;stroke:#64748b;stroke-width:1.8;marker-end:url(#arrow)}.pipe{fill:none;stroke:#0f766e;stroke-width:4;marker-end:url(#flow-arrow)}
+</style></defs>
+<rect width="100%" height="100%" rx="18" fill="#f8fafc"/><rect x="20" y="20" width="973" height="600" rx="16" fill="#fff" stroke="#e2e8f0"/>
+<text class="title" x="506" y="52">Bass Diffusion</text>
+<path class="pipe" d="M 292 315 Q 350 315 473 315"/>
+<path class="pipe" d="M 487 315 Q 610 315 678 315"/>
+<path class="info" d="M 120 141 Q 46 556 462 496"/>
+<path class="info" d="M 255 342 Q 350 415 455 496"/>
+<path class="info" d="M 805 141 Q 667 185 539 226"/>
+<path class="info" d="M 678 298 Q 610 280 551 264"/>
+<path class="info" d="M 292 296 Q 350 280 409 264"/>
+<path class="info" d="M 480 141 Q 480 185 480 226"/>
+<path class="info" d="M 480 496 Q 480 436 480 369"/>
+<path class="info" d="M 480 264 Q 404 301 480 345"/>
+<path d="M472,308 L480,315 L472,322 Z M488,308 L480,315 L488,322 Z" fill="#14b8a6" stroke="#0f766e"/>
+<text class="flow-label" x="480" y="361">Adoption Rate</text>
+<rect x="148" y="288" width="144" height="54" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" filter="url(#shadow)"/>
+<text class="node-label" x="220" y="319">Potential Adopters</text>
+<rect x="678" y="288" width="124" height="54" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" filter="url(#shadow)"/>
+<text class="node-label" x="740" y="319">Adopters</text>
+<rect x="27" y="109" width="156" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="105" y="129">Advertising Effectiveness</text>
+<rect x="415" y="109" width="130" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="480" y="129">Total Population</text>
+<rect x="402" y="226" width="156" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="480" y="241"><tspan x="480">Adoption from Word</tspan><tspan x="480" dy="15">of Mouth</tspan></text>
+<rect x="402" y="496" width="156" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="480" y="511"><tspan x="480">Adoption from</tspan><tspan x="480" dy="15">Advertising</tspan></text>
+<rect x="777" y="109" width="156" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="855" y="121"><tspan x="855">Word of</tspan><tspan x="855" dy="15">Mouth Strength</tspan></text>
+</svg>

@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="993" height="640" viewBox="0 0 993 640">
+<defs>
+<filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".12"/></filter>
+<marker id="arrow" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto"><path d="M0,0 L9,3.5 L0,7 Z" fill="#475569"/></marker>
+<marker id="flow-arrow" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="9" refX="11" refY="4.5" orient="auto"><path d="M0,0 L12,4.5 L0,9 Z" fill="#0f766e"/></marker>
+<style>
+.title{font:700 22px Inter,Arial,sans-serif;fill:#0f172a;text-anchor:middle}.node-label{font:600 13px Inter,Arial,sans-serif;fill:#1e293b;text-anchor:middle}.flow-label{font:600 12px Inter,Arial,sans-serif;fill:#0f766e;text-anchor:middle}.small-label{font:500 12px Inter,Arial,sans-serif;fill:#334155;text-anchor:middle}.info{fill:none;stroke:#64748b;stroke-width:1.8;marker-end:url(#arrow)}.pipe{fill:none;stroke:#0f766e;stroke-width:4;marker-end:url(#flow-arrow)}
+</style></defs>
+<rect width="100%" height="100%" rx="18" fill="#f8fafc"/><rect x="20" y="20" width="953" height="600" rx="16" fill="#fff" stroke="#e2e8f0"/>
+<text class="title" x="496" y="52">Market Adoption Feedback</text>
+<path class="pipe" d="M 195 315 Q 250 315 308 315"/>
+<path class="pipe" d="M 322 315 Q 397 315 418 315"/>
+<path class="pipe" d="M 542 315 Q 562 315 638 315"/>
+<path class="pipe" d="M 652 315 Q 710 315 765 315"/>
+<path class="info" d="M 458 342 Q 397 415 331 496"/>
+<path class="info" d="M 654 141 Q 596 415 332 496"/>
+<path class="info" d="M 480 141 Q 660 315 490 496"/>
+<path class="info" d="M 481 342 Q 485 415 489 496"/>
+<path class="info" d="M 380 515 Q 402 515 436 515"/>
+<path class="info" d="M 661 141 Q 578 320 499 496"/>
+<path class="info" d="M 133 141 Q 210 185 282 226"/>
+<path class="info" d="M 295 141 Q 303 185 311 226"/>
+<path class="info" d="M 315 264 Q 239 301 315 345"/>
+<path class="info" d="M 469 496 Q 402 436 328 369"/>
+<path class="info" d="M 315 496 Q 315 436 315 369"/>
+<path class="info" d="M 841 141 Q 896 373 656 345"/>
+<path class="info" d="M 542 331 Q 562 336 605 347"/>
+<path d="M172,319 C169,310 179,305 185,310 C192,303 203,311 198,320 Z" fill="#ccfbf1" stroke="#0f766e"/>
+<path d="M762,319 C759,310 769,305 775,310 C782,303 793,311 788,320 Z" fill="#ccfbf1" stroke="#0f766e"/>
+<path d="M307,308 L315,315 L307,322 Z M323,308 L315,315 L323,322 Z" fill="#14b8a6" stroke="#0f766e"/>
+<path d="M637,308 L645,315 L637,322 Z M653,308 L645,315 L653,322 Z" fill="#14b8a6" stroke="#0f766e"/>
+<text class="flow-label" x="315" y="361">Acquisition</text>
+<text class="flow-label" x="645" y="361">Attrition</text>
+<rect x="418" y="288" width="124" height="54" rx="8" fill="#dbeafe" stroke="#1d4ed8" stroke-width="2" filter="url(#shadow)"/>
+<text class="node-label" x="480" y="319">Active Users</text>
+<rect x="43" y="109" width="124" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="105" y="129">Campaign Budget</text>
+<rect x="216" y="109" width="152" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="292" y="129">Campaign Efficiency</text>
+<rect x="250" y="226" width="130" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="315" y="249">Base Acquisition</text>
+<rect x="250" y="496" width="130" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="315" y="519">Remaining Market</text>
+<rect x="402" y="109" width="156" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="480" y="129">Contact Effectiveness</text>
+<rect x="436" y="496" width="108" height="38" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="490" y="511"><tspan x="490">Word of</tspan><tspan x="490" dy="15">Mouth</tspan></text>
+<rect x="603" y="109" width="130" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="668" y="129">Market Potential</text>
+<rect x="797" y="109" width="116" height="32" rx="14" fill="#f1f5f9" stroke="#94a3b8"/>
+<text class="small-label" x="855" y="129">Churn Fraction</text>
+</svg>
